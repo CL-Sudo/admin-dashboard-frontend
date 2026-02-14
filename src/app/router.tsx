@@ -1,15 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { tokenStorage } from '@/lib/storage';
-import type { JSX } from 'react';
-
-function Protected({ children }: { children: JSX.Element }) {
-  const token = tokenStorage.getAccess();
-  if (!token) return <Navigate to="/login" replace />;
-  return children;
-}
+import LoginPage from '@/features/auth/LoginPage';
+import Protected from '@/features/auth/Protected';
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <h1>Login page</h1> },
+  { path: '/login', element: <LoginPage /> },
   {
     path: '/',
     element: (
