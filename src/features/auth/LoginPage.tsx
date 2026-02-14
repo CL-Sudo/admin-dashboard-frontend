@@ -13,6 +13,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/httpError';
 
 const schema = z.object({
   email: z.string().email(),
@@ -21,14 +25,24 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const form = useForm<FormValues>({ resolver: zodResolver(schema) });
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (v: FormValues) => {
-    const data = await login(v.email, v.password);
-    tokenStorage.setAccess(data.accessToken);
-    tokenStorage.setRefresh(data.refreshToken);
-    nav('/', { replace: true });
+    try {
+      setError(null);
+      const data = await login(v.email, v.password);
+      tokenStorage.setAccess(data.accessToken);
+      tokenStorage.setRefresh(data.refreshToken);
+      navigate('/', { replace: true });
+    } catch (err: unknown) {
+      const message =
+        (err as AxiosError).response?.status === 401
+          ? 'Invalid email or password'
+          : getErrorMessage(err);
+      setError(message);
+    }
   };
 
   return (
@@ -38,6 +52,13 @@ export default function LoginPage() {
           <CardTitle>Admin Login</CardTitle>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert className="mb-4 border-red-200 bg-red-50">
+              <AlertDescription className="text-red-800">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
