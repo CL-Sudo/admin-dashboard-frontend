@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { tokenStorage } from '@/lib/storage';
 import type { JSX } from 'react';
 import LoginPage from '@/features/auth/LoginPage';
+import ProductsPage from '@/features/products/ProductsPage';
 
 function Protected({ children }: { children: JSX.Element }) {
   const token = tokenStorage.getAccess();
@@ -20,7 +21,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <h1>Dashboard page</h1> },
-      { path: 'products', element: <h1>Products page</h1> },
+      { path: 'products', element: <ProductsPage /> },
     ],
   },
   { path: '*', element: <h1>Not Found page</h1> },
