@@ -1,6 +1,8 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import LoginPage from '@/features/auth/LoginPage';
-import Protected from '@/features/auth/Protected';
+import AppShell from '@/components/layout/AppShell';
+import Protected from '@/components/auth/Protected';
+import RequireRole from '@/components/auth/RequireRole';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -8,13 +10,39 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <Protected>
-        <h1>Protected Route</h1>
+        <AppShell />
       </Protected>
     ),
     children: [
-      { index: true, element: <h1>Dashboard page</h1> },
-      { path: 'products', element: <h1>Products page</h1> },
+      { index: true, element: <h1>Dashboard Page</h1> },
+      {
+        path: 'products',
+        element: (
+          <RequireRole allow={['ADMIN', 'STAFF', 'VIEWER']}>
+            {/* <ProductsPage /> */}
+            <h1>Products Page</h1>
+          </RequireRole>
+        ),
+      },
+      {
+        path: 'categories',
+        element: (
+          <RequireRole allow={['ADMIN', 'STAFF', 'VIEWER']}>
+            {/* <CategoriesPage /> */}
+            <h1>Categories Page</h1>
+          </RequireRole>
+        ),
+      },
+      {
+        path: 'audit-logs',
+        element: (
+          <RequireRole allow={['ADMIN', 'STAFF']}>
+            {/* <AuditLogsPage /> */}
+            <h1>Audit Logs Page</h1>
+          </RequireRole>
+        ),
+      },
     ],
   },
-  { path: '*', element: <h1>Not Found page</h1> },
+  { path: '*', element: <h1>404 Not Found</h1> },
 ]);

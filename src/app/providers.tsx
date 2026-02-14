@@ -13,6 +13,7 @@ const queryClient = new QueryClient({
       //Prevents automatic data refetching when the browser window regains focus (improves performance and reduces unnecessary API calls)
       refetchOnWindowFocus: false,
     },
+    mutations: { retry: 0 },
   },
 });
 
