@@ -1,3 +1,4 @@
+import { logout } from '@/api/auth';
 import { tokenStorage } from '@/lib/storage';
 
 type JwtPayload = {
@@ -55,5 +56,12 @@ export const authStore = {
     const u = authStore.getUser();
     return !!u?.roles?.includes(role);
   },
-  logout: () => tokenStorage.clear(),
+  logout: async () => {
+    try {
+      await logout();
+      tokenStorage.clear();
+    } catch (error) {
+      throw error;
+    }
+  },
 };
