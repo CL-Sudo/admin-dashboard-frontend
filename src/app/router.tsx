@@ -7,6 +7,7 @@ import ProductsPage from '@/features/products/ProductsPage';
 import CategoriesPage from '@/features/categories/CategoriesPage';
 import AuditLogsPage from '@/features/audit/AuditLogsPage';
 import DashboardPage from '@/pages/DashboardPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -45,5 +46,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  { path: '*', element: <h1>404 Not Found</h1> },
+  { path: '*', element: <NotFoundPage /> },
 ]);
