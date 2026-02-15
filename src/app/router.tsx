@@ -3,6 +3,8 @@ import AppShell from '@/components/layout/AppShell';
 import Protected from '@/components/auth/Protected';
 import RequireRole from '@/components/auth/RequireRole';
 import { createBrowserRouter } from 'react-router-dom';
+import ProductsPage from '@/features/products/ProductsPage';
+import CategoriesPage from '@/features/categories/CategoriesPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -19,8 +21,7 @@ export const router = createBrowserRouter([
         path: 'products',
         element: (
           <RequireRole allow={['ADMIN', 'STAFF', 'VIEWER']}>
-            {/* <ProductsPage /> */}
-            <h1>Products Page</h1>
+            <ProductsPage />
           </RequireRole>
         ),
       },
@@ -28,8 +29,7 @@ export const router = createBrowserRouter([
         path: 'categories',
         element: (
           <RequireRole allow={['ADMIN', 'STAFF', 'VIEWER']}>
-            {/* <CategoriesPage /> */}
-            <h1>Categories Page</h1>
+            <CategoriesPage />
           </RequireRole>
         ),
       },
