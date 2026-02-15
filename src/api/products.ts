@@ -46,6 +46,7 @@ export type UpsertProductInput = {
   categoryId?: string | null;
 };
 
+// <Product> replaces the T[] in Paged<T> so the response data will be typed as Paged<Product>.
 export async function getProducts(params?: ProductListParams) {
   const res = await api.get<Paged<Product>>('/products', { params });
   return res.data;

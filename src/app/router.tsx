@@ -1,8 +1,8 @@
-import { createBrowserRouter } from 'react-router-dom';
 import LoginPage from '@/features/auth/LoginPage';
 import AppShell from '@/components/layout/AppShell';
 import Protected from '@/components/auth/Protected';
 import RequireRole from '@/components/auth/RequireRole';
+import { createBrowserRouter } from 'react-router-dom';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
