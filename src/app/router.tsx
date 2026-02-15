@@ -5,6 +5,8 @@ import RequireRole from '@/components/auth/RequireRole';
 import { createBrowserRouter } from 'react-router-dom';
 import ProductsPage from '@/features/products/ProductsPage';
 import CategoriesPage from '@/features/categories/CategoriesPage';
+import AuditLogsPage from '@/features/audit/AuditLogsPage';
+import DashboardPage from '@/pages/DashboardPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -16,7 +18,7 @@ export const router = createBrowserRouter([
       </Protected>
     ),
     children: [
-      { index: true, element: <h1>Dashboard Page</h1> },
+      { index: true, element: <DashboardPage /> },
       {
         path: 'products',
         element: (
@@ -37,8 +39,7 @@ export const router = createBrowserRouter([
         path: 'audit-logs',
         element: (
           <RequireRole allow={['ADMIN', 'STAFF']}>
-            {/* <AuditLogsPage /> */}
-            <h1>Audit Logs Page</h1>
+            <AuditLogsPage />
           </RequireRole>
         ),
       },
