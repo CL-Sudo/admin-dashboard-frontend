@@ -41,6 +41,7 @@ import Pagination from '@/components/shared/Pagination';
 import ProductFormDialog from './ProductFormDialog';
 import { RoleGate } from '@/components/auth/RoleGate';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useDebounce } from '@/lib/useDebounce';
 
 export default function ProductsPage() {
   const qc = useQueryClient();
@@ -53,6 +54,8 @@ export default function ProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
 
+  const debouncedSearch = useDebounce(search, 200);
+
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: getCategories,
@@ -60,7 +63,7 @@ export default function ProductsPage() {
 
   const params = useMemo(
     () => ({
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       status: status === 'all' ? undefined : status,
       categoryId: categoryId === 'all' ? undefined : categoryId,
       page,
@@ -68,7 +71,7 @@ export default function ProductsPage() {
       sort: 'createdAt' as const,
       order: 'desc' as const,
     }),
-    [search, status, categoryId, page]
+    [debouncedSearch, status, categoryId, page]
   );
 
   const { data, isLoading, error } = useQuery({
