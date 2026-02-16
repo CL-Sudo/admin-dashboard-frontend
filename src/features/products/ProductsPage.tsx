@@ -7,12 +7,13 @@ import {
 import {
   getProducts,
   deleteProduct,
-  type ProductStatus,
   type Product,
+  type ProductStatus,
 } from '@/api/products';
 import { getCategories } from '@/api/categories';
 import { getErrorMessage } from '@/lib/httpError';
 import { toast } from 'sonner';
+import { useDebounce } from '@/lib/useDebounce';
 
 import {
   Card,
@@ -29,32 +30,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import Pagination from '@/components/shared/Pagination';
 import ProductFormDialog from './ProductFormDialog';
 import { RoleGate } from '@/components/auth/RoleGate';
+import StatusBadge from '@/components/shared/StatusBadge';
+import DataTable, {
+  type ColumnDef,
+} from '@/components/shared/DataTable';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { useDebounce } from '@/lib/useDebounce';
+import { productsKeys } from './products.keys';
 
 export default function ProductsPage() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 200);
+
   const [status, setStatus] = useState<ProductStatus | 'all'>('all');
   const [categoryId, setCategoryId] = useState<string | 'all'>('all');
   const [page, setPage] = useState(1);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-
-  const debouncedSearch = useDebounce(search, 200);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -74,8 +71,8 @@ export default function ProductsPage() {
     [debouncedSearch, status, categoryId, page]
   );
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['products', params],
+  const productsQuery = useQuery({
+    queryKey: productsKeys.list(params),
     queryFn: () => getProducts(params),
   });
 
@@ -83,10 +80,12 @@ export default function ProductsPage() {
     mutationFn: (id: string) => deleteProduct(id),
     onSuccess: async () => {
       toast('Product deleted');
-      await qc.invalidateQueries({ queryKey: ['products'] });
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: e =>
-      toast('Delete failed', { description: getErrorMessage(e) }),
+      toast('Delete failed', {
+        description: getErrorMessage(e),
+      }),
   });
 
   const openCreate = () => {
@@ -99,6 +98,54 @@ export default function ProductsPage() {
     setDialogOpen(true);
   };
 
+  const columns: ColumnDef<Product>[] = [
+    {
+      header: 'Name',
+      cell: p => <span className="font-medium">{p.name}</span>,
+    },
+    { header: 'SKU', cell: p => p.sku },
+    { header: 'Category', cell: p => p.category?.name ?? '-' },
+    { header: 'Status', cell: p => <StatusBadge value={p.status} /> },
+    {
+      header: 'Price',
+      className: 'text-right',
+      cell: p => (
+        <span className="tabular-nums">
+          {(p.priceCents / 100).toFixed(2)} {p.currency}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      cell: p => (
+        <div className="inline-flex gap-2">
+          <RoleGate allow={['ADMIN', 'STAFF']}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openEdit(p)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </RoleGate>
+
+          <RoleGate allow={['ADMIN']}>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => delMut.mutate(p.id)}
+              disabled={delMut.isPending}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </RoleGate>
+        </div>
+      ),
+    },
+  ];
+
+  const data = productsQuery.data;
   const totalPages = data?.meta.totalPages ?? 1;
 
   return (
@@ -107,12 +154,12 @@ export default function ProductsPage() {
         <div>
           <CardTitle>Products</CardTitle>
           <div className="text-sm opacity-70">
-            Search, filter, create, edit
+            Debounced search + optimistic mutations
           </div>
         </div>
 
         <RoleGate allow={['ADMIN', 'STAFF']}>
-          <Button onClick={openCreate} className="md:self-end">
+          <Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-2" />
             New Product
           </Button>
@@ -121,6 +168,7 @@ export default function ProductsPage() {
         <ProductFormDialog
           open={dialogOpen}
           onOpenChange={v => {
+            console.log('dialog open change', v);
             setDialogOpen(v);
             if (!v) setEditing(null);
           }}
@@ -128,7 +176,7 @@ export default function ProductsPage() {
         />
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="grid gap-3 md:grid-cols-3">
           <Input
             placeholder="Search name or SKU..."
@@ -178,84 +226,19 @@ export default function ProductsPage() {
           </Select>
         </div>
 
-        <div className="mt-4 border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="w-35 text-right">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
+        {productsQuery.isLoading && <div>Loading...</div>}
+        {productsQuery.error && (
+          <div className="text-red-500">
+            {getErrorMessage(productsQuery.error)}
+          </div>
+        )}
 
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={6}>Loading...</TableCell>
-                </TableRow>
-              )}
-
-              {error && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-red-500">
-                    {getErrorMessage(error)}
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {data?.data?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="opacity-70">
-                    No products found.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {data?.data?.map(p => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">
-                    {p.name}
-                  </TableCell>
-                  <TableCell>{p.sku}</TableCell>
-                  <TableCell>{p.category?.name ?? '-'}</TableCell>
-                  <TableCell>{p.status}</TableCell>
-                  <TableCell className="text-right">
-                    {(p.priceCents / 100).toFixed(2)} {p.currency}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex gap-2">
-                      <RoleGate allow={['ADMIN', 'STAFF']}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEdit(p)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </RoleGate>
-
-                      <RoleGate allow={['ADMIN']}>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => delMut.mutate(p.id)}
-                          disabled={delMut.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </RoleGate>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          columns={columns}
+          rows={data?.data ?? []}
+          keyFn={p => p.id}
+          emptyText="No products found."
+        />
 
         <Pagination
           page={data?.meta.page ?? page}
@@ -266,4 +249,50 @@ export default function ProductsPage() {
       </CardContent>
     </Card>
   );
+
+  // const delMut = useMutation({
+  //   mutationFn: (id: string) => deleteProduct(id),
+
+  //   // optimistic remove
+  //   onMutate: async id => {
+  //     await queryClient.cancelQueries({ queryKey: productsKeys.all });
+  //     const snapshots = queryClient.getQueriesData({
+  //       queryKey: productsKeys.all,
+  //     });
+
+  //     queryClient.setQueriesData(
+  //       { queryKey: productsKeys.all },
+  //       (old: any) => {
+  //         if (!old?.data) return old;
+  //         return {
+  //           ...old,
+  //           data: old.data.filter((p: Product) => p.id !== id),
+  //           meta: {
+  //             ...old.meta,
+  //             total: Math.max(0, (old.meta?.total ?? 0) - 1),
+  //           },
+  //         };
+  //       }
+  //     );
+
+  //     return { snapshots };
+  //   },
+
+  //   onError: (e, _id, ctx) => {
+  //     ctx?.snapshots?.forEach(([key, data]: any) =>
+  //       queryClient.setQueryData(key, data)
+  //     );
+  //     toast('Delete failed', {
+  //       description: getErrorMessage(e),
+  //     });
+  //   },
+
+  //   onSuccess: () => toast('Product deleted'),
+
+  //   onSettled: async () => {
+  //     await queryClient.invalidateQueries({
+  //       queryKey: productsKeys.all,
+  //     });
+  //   },
+  // });
 }

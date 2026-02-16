@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+// import { productsKeys } from './products.keys';
 
 const schema = z.object({
   name: z.string().min(2),
@@ -79,18 +80,32 @@ export default function ProductFormDialog({
   });
 
   useEffect(() => {
-    if (!product) return;
-    form.reset({
-      name: product.name,
-      sku: product.sku,
-      priceCents: product.priceCents,
-      currency: product.currency ?? 'MYR',
-      status: (product.status ?? 'ACTIVE') as ProductStatus,
-      description: product.description ?? '',
-      imageUrl: product.imageUrl ?? '',
-      categoryId: product.categoryId ?? null,
-    });
-  }, [product, form]);
+    if (product) {
+      // Editing mode: populate form with product data
+      form.reset({
+        name: product.name,
+        sku: product.sku,
+        priceCents: product.priceCents,
+        currency: product.currency ?? 'MYR',
+        status: (product.status ?? 'ACTIVE') as ProductStatus,
+        description: product.description ?? '',
+        imageUrl: product.imageUrl ?? '',
+        categoryId: product.categoryId ?? null,
+      });
+    } else if (open) {
+      // Create mode: reset form when dialog opens
+      form.reset({
+        name: '',
+        sku: '',
+        priceCents: 0,
+        currency: 'MYR',
+        status: 'ACTIVE',
+        description: '',
+        imageUrl: '',
+        categoryId: null,
+      });
+    }
+  }, [product, open, form]);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -272,4 +287,150 @@ export default function ProductFormDialog({
       </DialogContent>
     </Dialog>
   );
+
+  // Replace createMut:
+  // const createMut = useMutation({
+  //   mutationFn: (v: FormValues) =>
+  //     createProduct({
+  //       ...v,
+  //       categoryId: v.categoryId ?? null,
+  //       description: v.description || undefined,
+  //       imageUrl: v.imageUrl || undefined,
+  //     }),
+
+  //   onMutate: async v => {
+  //     await qc.cancelQueries({ queryKey: productsKeys.all });
+  //     const snapshots = qc.getQueriesData({
+  //       queryKey: productsKeys.all,
+  //     });
+
+  //     const tempId = `temp-${crypto.randomUUID()}`;
+  //     const temp: Product = {
+  //       id: tempId,
+  //       name: v.name,
+  //       sku: v.sku,
+  //       priceCents: v.priceCents,
+  //       currency: v.currency ?? 'MYR',
+  //       status: v.status,
+  //       description: v.description ?? null,
+  //       imageUrl: v.imageUrl ?? null,
+  //       categoryId: v.categoryId ?? null,
+  //       category:
+  //         categories?.find(c => c.id === v.categoryId) ?? null,
+  //     };
+
+  //     qc.setQueriesData(
+  //       { queryKey: productsKeys.all },
+  //       (old: any) => {
+  //         if (!old?.data) return old;
+  //         return {
+  //           ...old,
+  //           data: [temp, ...old.data],
+  //           meta: { ...old.meta, total: (old.meta?.total ?? 0) + 1 },
+  //         };
+  //       }
+  //     );
+
+  //     return { snapshots, tempId };
+  //   },
+
+  //   onError: (e, _v, ctx) => {
+  //     ctx?.snapshots?.forEach(([key, data]: any) =>
+  //       qc.setQueryData(key, data)
+  //     );
+  //     toast('Create failed', {
+  //       description: getErrorMessage(e),
+  //     });
+  //   },
+
+  //   onSuccess: async (created, _v, ctx) => {
+  //     toast('Product created');
+
+  //     // Replace temp row with real one
+  //     qc.setQueriesData(
+  //       { queryKey: productsKeys.all },
+  //       (old: any) => {
+  //         if (!old?.data) return old;
+  //         return {
+  //           ...old,
+  //           data: old.data.map((p: Product) =>
+  //             p.id === ctx?.tempId ? created : p
+  //           ),
+  //         };
+  //       }
+  //     );
+
+  //     onOpenChange?.(false);
+  //     form.reset();
+  //   },
+
+  //   onSettled: async () => {
+  //     await qc.invalidateQueries({ queryKey: productsKeys.all });
+  //   },
+  // });
+
+  // const updateMut = useMutation({
+  //   mutationFn: (v: FormValues) =>
+  //     updateProduct(product!.id, {
+  //       ...v,
+  //       categoryId: v.categoryId ?? null,
+  //       description: v.description || undefined,
+  //       imageUrl: v.imageUrl || undefined,
+  //     }),
+
+  //   onMutate: async v => {
+  //     await qc.cancelQueries({ queryKey: productsKeys.all });
+  //     const snapshots = qc.getQueriesData({
+  //       queryKey: productsKeys.all,
+  //     });
+
+  //     qc.setQueriesData(
+  //       { queryKey: productsKeys.all },
+  //       (old: any) => {
+  //         if (!old?.data) return old;
+  //         return {
+  //           ...old,
+  //           data: old.data.map((p: Product) =>
+  //             p.id === product!.id
+  //               ? {
+  //                   ...p,
+  //                   name: v.name,
+  //                   sku: v.sku,
+  //                   priceCents: v.priceCents,
+  //                   currency: v.currency ?? p.currency,
+  //                   status: v.status,
+  //                   description: v.description ?? null,
+  //                   imageUrl: v.imageUrl ?? null,
+  //                   categoryId: v.categoryId ?? null,
+  //                   category:
+  //                     categories?.find(c => c.id === v.categoryId) ??
+  //                     null,
+  //                 }
+  //               : p
+  //           ),
+  //         };
+  //       }
+  //     );
+
+  //     return { snapshots };
+  //   },
+
+  //   onError: (e, _v, ctx) => {
+  //     ctx?.snapshots?.forEach(([key, data]: any) =>
+  //       qc.setQueryData(key, data)
+  //     );
+  //     toast('Update failed', {
+  //       description: getErrorMessage(e),
+  //     });
+  //   },
+
+  //   onSuccess: async () => {
+  //     toast('Product updated');
+  //     onOpenChange?.(false);
+  //   },
+
+  //   onSettled: async () => {
+  //     await qc.invalidateQueries({ queryKey: productsKeys.all });
+  //   },
+  // });
 }
