@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { env } from '@/lib/env';
 import { tokenStorage } from '@/lib/storage';
+import { authEvents } from '@/features/auth/auth.events';
 
 // Study: https://gemini.google.com/share/a2e1921c7d96
 // Refined Version: https://gemini.google.com/share/42c29a12e90a
@@ -71,6 +72,7 @@ api.interceptors.response.use(
     } catch (e) {
       queue.forEach(fn => fn(null));
       queue = [];
+      authEvents.emitLogout();
       tokenStorage.clear();
       throw e;
     } finally {

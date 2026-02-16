@@ -1,5 +1,6 @@
 import { logout } from '@/api/auth';
 import { tokenStorage } from '@/lib/storage';
+import { authEvents } from './auth.events';
 
 type JwtPayload = {
   sub: string;
@@ -60,6 +61,7 @@ export const authStore = {
     try {
       await logout();
       tokenStorage.clear();
+      authEvents.emitLogout();
     } catch (error) {
       throw error;
     }

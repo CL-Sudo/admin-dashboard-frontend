@@ -1,8 +1,22 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import { useEffect } from 'react';
+import { authEvents } from '@/features/auth/auth.events';
 
 export default function AppShell() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = authEvents.onLogout(() => {
+      navigate('/login', { replace: true });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [navigate]);
+
   return (
     <div className="min-h-screen flex">
       <Sidebar />
