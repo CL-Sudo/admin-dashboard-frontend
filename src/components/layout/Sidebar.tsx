@@ -4,6 +4,7 @@ import {
   Package,
   Tags,
   ScrollText,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RoleGate } from '@/components/auth/RoleGate';
@@ -30,6 +31,18 @@ export default function Sidebar() {
           <LayoutDashboard className="h-4 w-4" />
           Dashboard
         </NavLink>
+
+        <RoleGate allow={['ADMIN']}>
+          <NavLink
+            to="/users"
+            className={({ isActive }) =>
+              cn(linkBase, isActive && 'bg-muted')
+            }
+          >
+            <Users className="h-4 w-4" />
+            Users
+          </NavLink>
+        </RoleGate>
 
         <NavLink
           to="/products"

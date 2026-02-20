@@ -8,6 +8,7 @@ import CategoriesPage from '@/features/categories/CategoriesPage';
 import AuditLogsPage from '@/features/audit/AuditLogsPage';
 import DashboardPage from '@/pages/DashboardPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import UserPage from '@/features/users/UserPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -20,6 +21,14 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
+      {
+        path: 'users',
+        element: (
+          <RequireRole allow={['ADMIN']}>
+            <UserPage />
+          </RequireRole>
+        ),
+      },
       {
         path: 'products',
         element: (
