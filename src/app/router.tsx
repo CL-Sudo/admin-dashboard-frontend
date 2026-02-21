@@ -9,9 +9,12 @@ import AuditLogsPage from '@/features/audit/AuditLogsPage';
 import DashboardPage from '@/pages/DashboardPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import UserPage from '@/features/users/UserPage';
+import UserDetailPage from '@/features/users/UserDetailPage';
+import ResetPasswordPage from '@/features/auth/ResetPasswordPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   {
     path: '/',
     element: (
@@ -29,6 +32,7 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
+      { path: 'users/:id', element: <UserDetailPage /> },
       {
         path: 'products',
         element: (

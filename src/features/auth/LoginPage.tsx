@@ -92,6 +92,14 @@ export default function LoginPage() {
                 ? 'Signing in...'
                 : 'Sign in'}
             </Button>
+            <div className="text-center text-sm">
+              <a
+                href="/reset-password"
+                className="underline opacity-70 hover:opacity-100"
+              >
+                Reset Password
+              </a>
+            </div>
           </form>
         </CardContent>
       </Card>
