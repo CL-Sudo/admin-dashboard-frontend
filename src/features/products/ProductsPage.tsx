@@ -30,6 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import Pagination from '@/components/shared/Pagination';
 import ProductFormDialog from './ProductFormDialog';
 import { RoleGate } from '@/components/auth/RoleGate';
@@ -52,6 +60,10 @@ export default function ProductsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Product | null>(
+    null
+  );
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -79,7 +91,9 @@ export default function ProductsPage() {
   const delMut = useMutation({
     mutationFn: (id: string) => deleteProduct(id),
     onSuccess: async () => {
-      toast('Product deleted');
+      toast.success('Product deleted');
+      setDeleteConfirmOpen(false);
+      setPendingDelete(null);
       await queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: e =>
@@ -134,7 +148,10 @@ export default function ProductsPage() {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => delMut.mutate(p.id)}
+              onClick={() => {
+                setPendingDelete(p);
+                setDeleteConfirmOpen(true);
+              }}
               disabled={delMut.isPending}
             >
               <Trash2 className="h-4 w-4" />
@@ -239,6 +256,49 @@ export default function ProductsPage() {
           keyFn={p => p.id}
           emptyText="No products found."
         />
+
+        <Dialog
+          open={deleteConfirmOpen}
+          onOpenChange={v => {
+            if (delMut.isPending) return;
+            setDeleteConfirmOpen(v);
+            if (!v) setPendingDelete(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete product?</DialogTitle>
+              <DialogDescription>
+                {pendingDelete
+                  ? `This will permanently delete \"${pendingDelete.name}\".`
+                  : 'This will permanently delete the selected product.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setPendingDelete(null);
+                }}
+                disabled={delMut.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (!pendingDelete) return;
+                  delMut.mutate(pendingDelete.id);
+                }}
+                disabled={delMut.isPending || !pendingDelete}
+              >
+                {delMut.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Pagination
           page={data?.meta.page ?? page}
