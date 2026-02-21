@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Eye, EyeOff } from 'lucide-react';
 
 const schema = z
   .object({
@@ -35,6 +36,9 @@ type FormValues = z.infer<typeof schema>;
 export default function ResetPasswordPage() {
   const nav = useNavigate();
   const [sp] = useSearchParams();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const tokenFromUrl = useMemo(() => sp.get('token') ?? '', [sp]);
 
@@ -81,24 +85,46 @@ export default function ResetPasswordPage() {
               <Input
                 {...form.register('resetToken')}
                 placeholder="Paste token here"
+                autoFocus
+                disabled={mut.isPending}
+                onBlur={e =>
+                  form.setValue('resetToken', e.target.value.trim())
+                }
               />
               {form.formState.errors.resetToken && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.resetToken.message}
                 </p>
               )}
-              <p className="text-xs opacity-70">
-                For dev: get token from Users → “Request password
-                reset”.
-              </p>
             </div>
 
             <div className="space-y-2">
               <Label>New Password</Label>
-              <Input
-                type="password"
-                {...form.register('newPassword')}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  {...form.register('newPassword')}
+                  disabled={mut.isPending}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={mut.isPending}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? 'Hide password' : 'Show password'}
+                  </span>
+                </Button>
+              </div>
               {form.formState.errors.newPassword && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.newPassword.message}
@@ -108,10 +134,31 @@ export default function ResetPasswordPage() {
 
             <div className="space-y-2">
               <Label>Confirm Password</Label>
-              <Input
-                type="password"
-                {...form.register('confirmPassword')}
-              />
+              <div className="relative">
+                <Input
+                  type={showConfirm ? 'text' : 'password'}
+                  {...form.register('confirmPassword')}
+                  disabled={mut.isPending}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  disabled={mut.isPending}
+                >
+                  {showConfirm ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {showConfirm ? 'Hide password' : 'Show password'}
+                  </span>
+                </Button>
+              </div>
               {form.formState.errors.confirmPassword && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.confirmPassword.message}
