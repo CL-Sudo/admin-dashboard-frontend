@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useMutation,
   useQuery,
@@ -148,7 +149,11 @@ export default function UsersPage() {
   const columns: ColumnDef<UserRow>[] = [
     {
       header: 'Name',
-      cell: u => <div className="font-medium">{u.name}</div>,
+      cell: u => (
+        <Link to={`/users/${u.id}`} className="font-medium underline">
+          {u.name}
+        </Link>
+      ),
     },
     {
       header: 'Email',
