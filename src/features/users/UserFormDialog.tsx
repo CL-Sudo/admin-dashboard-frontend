@@ -61,22 +61,22 @@ export default function UserFormDialog({
   });
 
   useEffect(() => {
-    if (!user) {
+    if (user) {
+      form.reset({
+        email: user.email,
+        name: user.name,
+        initialPassword: '',
+        role: (user.roles?.[0] ?? 'VIEWER') as RoleName,
+      });
+    } else if (open) {
       form.reset({
         email: '',
         name: '',
         initialPassword: '',
         role: 'VIEWER',
       });
-      return;
     }
-    form.reset({
-      email: user.email,
-      name: user.name,
-      initialPassword: '',
-      role: (user.roles?.[0] ?? 'VIEWER') as RoleName,
-    });
-  }, [user, form]);
+  }, [user, form, open]);
 
   const createMut = useMutation({
     mutationFn: (v: FormValues) =>

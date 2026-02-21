@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -44,14 +45,7 @@ import UserFormDialog from './UserFormDialog';
 import UserRolesDialog from './UserRolesDialog';
 import PasswordResetDialog from './PasswordResetDialog';
 
-import {
-  Plus,
-  Shield,
-  KeyRound,
-  ToggleLeft,
-  ToggleRight,
-  Pencil,
-} from 'lucide-react';
+import { Plus, Shield, KeyRound, Pencil } from 'lucide-react';
 
 export default function UsersPage() {
   const qc = useQueryClient();
@@ -207,23 +201,16 @@ export default function UsersPage() {
           </RoleGate>
 
           <RoleGate allow={['ADMIN']}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
+            <Switch
+              checked={u.status === 'ACTIVE'}
+              onCheckedChange={checked =>
                 statusMut.mutate({
                   id: u.id,
-                  s: u.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE',
+                  s: checked ? 'ACTIVE' : 'DISABLED',
                 })
               }
               disabled={statusMut.isPending}
-            >
-              {u.status === 'ACTIVE' ? (
-                <ToggleRight className="h-4 w-4" />
-              ) : (
-                <ToggleLeft className="h-4 w-4" />
-              )}
-            </Button>
+            />
           </RoleGate>
         </div>
       ),
