@@ -264,7 +264,7 @@ export default function UsersPage() {
 
         <PasswordResetDialog
           open={resetOpen}
-          onOpenChange={v => setResetOpen(v)}
+          setResetOpen={v => setResetOpen(v)}
           user={selected}
         />
       </CardHeader>
