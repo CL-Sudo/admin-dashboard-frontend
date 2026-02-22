@@ -47,6 +47,7 @@ import DataTable, {
 } from '@/components/shared/DataTable';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { productsKeys } from './products.keys';
+import { Link } from 'react-router-dom';
 
 export default function ProductsPage() {
   const queryClient = useQueryClient();
@@ -130,7 +131,14 @@ export default function ProductsPage() {
     },
     {
       header: 'Name',
-      cell: p => <span className="font-medium">{p.name}</span>,
+      cell: p => (
+        <Link
+          to={`/products/${p.id}`}
+          className="font-medium underline"
+        >
+          {p.name}
+        </Link>
+      ),
     },
     { header: 'SKU', cell: p => p.sku },
     { header: 'Category', cell: p => p.category?.name ?? '-' },

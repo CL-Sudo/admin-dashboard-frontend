@@ -12,6 +12,7 @@ import UserPage from '@/features/users/UserPage';
 import UserDetailPage from '@/features/users/UserDetailPage';
 import ResetPasswordPage from '@/features/auth/ResetPasswordPage';
 import DashboardPage from '@/features/dashboard/DashboardPage';
+import ProductDetailPage from '@/features/products/ProductDetailPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
+      { path: 'products/:id', element: <ProductDetailPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

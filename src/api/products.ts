@@ -13,6 +13,7 @@ export type Product = {
   imagePath?: string | null;
   description?: string | null;
   categoryId?: string | null;
+  updatedAt: string;
   category?: { id: string; name: string } | null;
 };
 
@@ -51,6 +52,11 @@ export type UpsertProductInput = {
 // <Product> replaces the T[] in Paged<T> so the response data will be typed as Paged<Product>.
 export async function getProducts(params?: ProductListParams) {
   const res = await api.get<Paged<Product>>('/products', { params });
+  return res.data;
+}
+
+export async function getProduct(id: string) {
+  const res = await api.get<Product>(`/products/${id}`);
   return res.data;
 }
 
