@@ -21,16 +21,18 @@ export default function Sidebar() {
       </div>
 
       <nav className="p-3 space-y-1">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            cn(linkBase, isActive && 'bg-muted')
-          }
-        >
-          <LayoutDashboard className="h-4 w-4" />
-          Dashboard
-        </NavLink>
+        <RoleGate allow={['ADMIN', 'STAFF']}>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              cn(linkBase, isActive && 'bg-muted')
+            }
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </NavLink>
+        </RoleGate>
 
         <RoleGate allow={['ADMIN']}>
           <NavLink
