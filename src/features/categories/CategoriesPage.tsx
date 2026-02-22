@@ -30,6 +30,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { RoleGate } from '@/components/auth/RoleGate';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 
@@ -44,6 +52,10 @@ export default function CategoriesPage() {
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<Category | null>(null);
   const [editName, setEditName] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Category | null>(
+    null
+  );
 
   const createMut = useMutation({
     mutationFn: (n: string) => createCategory(n),
@@ -74,6 +86,8 @@ export default function CategoriesPage() {
     mutationFn: (id: string) => deleteCategory(id),
     onSuccess: async () => {
       toast('Category deleted');
+      setDeleteConfirmOpen(false);
+      setPendingDelete(null);
       await qc.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: e =>
@@ -193,7 +207,10 @@ export default function CategoriesPage() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => deleteMut.mutate(c.id)}
+                          onClick={() => {
+                            setPendingDelete(c);
+                            setDeleteConfirmOpen(true);
+                          }}
                           disabled={deleteMut.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -214,6 +231,49 @@ export default function CategoriesPage() {
             </TableBody>
           </Table>
         </div>
+
+        <Dialog
+          open={deleteConfirmOpen}
+          onOpenChange={v => {
+            if (deleteMut.isPending) return;
+            setDeleteConfirmOpen(v);
+            if (!v) setPendingDelete(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete category?</DialogTitle>
+              <DialogDescription>
+                {pendingDelete
+                  ? `This will permanently delete "${pendingDelete.name}".`
+                  : 'This will permanently delete the selected category.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setPendingDelete(null);
+                }}
+                disabled={deleteMut.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (!pendingDelete) return;
+                  deleteMut.mutate(pendingDelete.id);
+                }}
+                disabled={deleteMut.isPending || !pendingDelete}
+              >
+                {deleteMut.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
