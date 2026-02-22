@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { uploadToSupabaseSignedUrl } from '@/lib/uploadSigned';
-// import { productsKeys } from './products.keys';
+import { productsKeys } from './products.keys';
 
 const schema = z.object({
   name: z.string().min(2),
@@ -85,6 +85,7 @@ export default function ProductFormDialog({
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     product?.imageUrl ?? null
   );
+  const previewObjectUrlRef = useRef<string | null>(null);
 
   const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
   const allowedTypes = new Set([
@@ -92,6 +93,18 @@ export default function ProductFormDialog({
     'image/png',
     'image/webp',
   ]);
+
+  const revokePreviewObjectUrl = () => {
+    if (!previewObjectUrlRef.current) return;
+    URL.revokeObjectURL(previewObjectUrlRef.current);
+    previewObjectUrlRef.current = null;
+  };
+
+  const resetImageState = (nextPreview: string | null) => {
+    setImageFile(null);
+    revokePreviewObjectUrl();
+    setPreviewUrl(nextPreview);
+  };
 
   useEffect(() => {
     if (product) {
@@ -105,7 +118,7 @@ export default function ProductFormDialog({
         description: product.description ?? '',
         categoryId: product.categoryId ?? null,
       });
-      setPreviewUrl(product.imageUrl ?? null);
+      resetImageState(product.imageUrl ?? null);
     } else if (open) {
       // Create mode: reset form when dialog opens
       form.reset({
@@ -117,9 +130,13 @@ export default function ProductFormDialog({
         description: '',
         categoryId: null,
       });
-      setPreviewUrl(null);
+      resetImageState(null);
+    } else {
+      resetImageState(null);
     }
   }, [product, open, form]);
+
+  useEffect(() => () => revokePreviewObjectUrl(), []);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -158,10 +175,9 @@ export default function ProductFormDialog({
     },
     onSuccess: async () => {
       toast.success('Product created');
-      await qc.invalidateQueries({ queryKey: ['products'] });
+      await qc.invalidateQueries({ queryKey: productsKeys.all });
       onOpenChange?.(false);
-      setImageFile(null);
-      setPreviewUrl(null);
+      resetImageState(null);
       form.reset();
     },
     onError: e =>
@@ -172,39 +188,44 @@ export default function ProductFormDialog({
 
   const updateMut = useMutation({
     mutationFn: async (v: FormValues) => {
-      const created = updateProduct(product!.id, {
+      const updated = await updateProduct(product!.id, {
         ...v,
         categoryId: v.categoryId ?? null,
         description: v.description || undefined,
       });
 
       if (imageFile) {
-        const up = await createProductImageUploadUrl({
-          productId: product!.id,
-          filename: imageFile.name,
-          contentType: imageFile.type,
-          sizeBytes: imageFile.size,
-        });
+        try {
+          const up = await createProductImageUploadUrl({
+            productId: product!.id,
+            filename: imageFile.name,
+            contentType: imageFile.type,
+            sizeBytes: imageFile.size,
+          });
 
-        await uploadToSupabaseSignedUrl({
-          signedUrl: up.signedUrl,
-          file: imageFile,
-        });
+          await uploadToSupabaseSignedUrl({
+            signedUrl: up.signedUrl,
+            file: imageFile,
+          });
 
-        await commitProductImage(product!.id, {
-          imagePath: up.path,
-          imageUrl: up.publicUrl,
-        });
+          await commitProductImage(product!.id, {
+            imagePath: up.path,
+            imageUrl: up.publicUrl,
+          });
+        } catch (e) {
+          toast.error('Image update failed', {
+            description: getErrorMessage(e),
+          });
+        }
       }
 
-      return created;
+      return updated;
     },
     onSuccess: async () => {
       toast.success('Product updated');
-      await qc.invalidateQueries({ queryKey: ['products'] });
+      await qc.invalidateQueries({ queryKey: productsKeys.all });
       onOpenChange?.(false);
-      setImageFile(null);
-      setPreviewUrl(null);
+      resetImageState(null);
     },
     onError: e =>
       toast.error('Update failed', {
@@ -274,7 +295,9 @@ export default function ProductFormDialog({
               <Label>Status</Label>
               <Select
                 value={form.watch('status')}
-                onValueChange={v => form.setValue('status', v as any)}
+                onValueChange={v =>
+                  form.setValue('status', v as ProductStatus)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
@@ -322,11 +345,7 @@ export default function ProductFormDialog({
               accept="image/png,image/jpeg,image/webp"
               onChange={e => {
                 const f = e.target.files?.[0] ?? null;
-                if (!f) {
-                  setImageFile(null);
-                  setPreviewUrl(null);
-                  return;
-                }
+                if (!f) return;
 
                 if (!allowedTypes.has(f.type)) {
                   toast.error('Invalid file type', {
@@ -344,8 +363,11 @@ export default function ProductFormDialog({
                   return;
                 }
 
+                revokePreviewObjectUrl();
                 setImageFile(f);
-                setPreviewUrl(URL.createObjectURL(f));
+                const objectUrl = URL.createObjectURL(f);
+                previewObjectUrlRef.current = objectUrl;
+                setPreviewUrl(objectUrl);
               }}
             />
 
@@ -357,7 +379,7 @@ export default function ProductFormDialog({
               />
             )}
 
-            {previewUrl && (
+            {isEdit && previewUrl && !imageFile && (
               <Button
                 type="button"
                 variant="outline"
@@ -369,7 +391,7 @@ export default function ProductFormDialog({
                   );
                   toast.success('Image removed');
                   await qc.invalidateQueries({
-                    queryKey: ['products'],
+                    queryKey: productsKeys.all,
                   });
                   setPreviewUrl(null);
                 }}

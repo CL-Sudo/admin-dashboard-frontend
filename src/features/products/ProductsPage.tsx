@@ -94,7 +94,9 @@ export default function ProductsPage() {
       toast.success('Product deleted');
       setDeleteConfirmOpen(false);
       setPendingDelete(null);
-      await queryClient.invalidateQueries({ queryKey: ['products'] });
+      await queryClient.invalidateQueries({
+        queryKey: productsKeys.all,
+      });
     },
     onError: e =>
       toast('Delete failed', {
@@ -119,6 +121,7 @@ export default function ProductsPage() {
         p.imageUrl ? (
           <img
             src={p.imageUrl}
+            alt={`${p.name} image`}
             className="h-30 w-30 rounded object-cover border"
           />
         ) : (
@@ -151,6 +154,7 @@ export default function ProductsPage() {
               variant="outline"
               size="sm"
               onClick={() => openEdit(p)}
+              aria-label={`Edit ${p.name}`}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -164,6 +168,7 @@ export default function ProductsPage() {
                 setPendingDelete(p);
                 setDeleteConfirmOpen(true);
               }}
+              aria-label={`Delete ${p.name}`}
               disabled={delMut.isPending}
             >
               <Trash2 className="h-4 w-4" />
@@ -182,9 +187,7 @@ export default function ProductsPage() {
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>Products</CardTitle>
-          <div className="text-sm opacity-70">
-            Debounced search + optimistic mutations
-          </div>
+          <div className="text-sm opacity-70">Debounced search</div>
         </div>
 
         <RoleGate allow={['ADMIN', 'STAFF']}>
@@ -197,7 +200,6 @@ export default function ProductsPage() {
         <ProductFormDialog
           open={dialogOpen}
           onOpenChange={v => {
-            console.log('dialog open change', v);
             setDialogOpen(v);
             if (!v) setEditing(null);
           }}
@@ -219,7 +221,7 @@ export default function ProductsPage() {
           <Select
             value={status}
             onValueChange={v => {
-              setStatus(v as any);
+              setStatus(v as ProductStatus | 'all');
               setPage(1);
             }}
           >
