@@ -10,6 +10,7 @@ export type Product = {
   currency: string;
   status: ProductStatus;
   imageUrl?: string | null;
+  imagePath?: string | null;
   description?: string | null;
   categoryId?: string | null;
   category?: { id: string; name: string } | null;
@@ -43,6 +44,7 @@ export type UpsertProductInput = {
   status?: ProductStatus;
   description?: string;
   imageUrl?: string;
+  imagePath?: string;
   categoryId?: string | null;
 };
 
@@ -67,5 +69,47 @@ export async function updateProduct(
 
 export async function deleteProduct(id: string) {
   const res = await api.delete(`/products/${id}`);
+  return res.data;
+}
+
+export async function createProductImageUploadUrl(input: {
+  productId: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+}) {
+  const res = await api.post<{
+    bucket: string;
+    path: string;
+    token: string;
+    signedUrl: string;
+    publicUrl: string | null;
+  }>('/products/image-upload-url', {
+    ...input,
+  });
+  return res.data;
+}
+
+export async function commitProductImage(
+  productId: string,
+  input: {
+    imagePath: string | null;
+    imageUrl: string | null;
+  }
+) {
+  const res = await api.post(
+    `/products/${productId}/image/commit`,
+    input
+  );
+  return res.data;
+}
+
+export async function removeProductImage(
+  productId: string,
+  expectedImagePath?: string
+) {
+  const res = await api.post(`/products/${productId}/image/remove`, {
+    expectedImagePath,
+  });
   return res.data;
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +8,10 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import {
+  commitProductImage,
   createProduct,
+  createProductImageUploadUrl,
+  removeProductImage,
   updateProduct,
   type Product,
   type ProductStatus,
@@ -35,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { uploadToSupabaseSignedUrl } from '@/lib/uploadSigned';
 // import { productsKeys } from './products.keys';
 
 const schema = z.object({
@@ -44,7 +48,6 @@ const schema = z.object({
   currency: z.string().min(1).default('MYR'),
   status: z.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']).default('ACTIVE'),
   description: z.string().optional(),
-  imageUrl: z.string().url().optional(),
   categoryId: z.string().uuid().nullable().optional(),
 });
 
@@ -74,10 +77,21 @@ export default function ProductFormDialog({
       currency: 'MYR',
       status: 'ACTIVE',
       description: '',
-      imageUrl: '',
       categoryId: null,
     },
   });
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    product?.imageUrl ?? null
+  );
+
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+  const allowedTypes = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ]);
 
   useEffect(() => {
     if (product) {
@@ -89,9 +103,9 @@ export default function ProductFormDialog({
         currency: product.currency ?? 'MYR',
         status: (product.status ?? 'ACTIVE') as ProductStatus,
         description: product.description ?? '',
-        imageUrl: product.imageUrl ?? '',
         categoryId: product.categoryId ?? null,
       });
+      setPreviewUrl(product.imageUrl ?? null);
     } else if (open) {
       // Create mode: reset form when dialog opens
       form.reset({
@@ -101,9 +115,9 @@ export default function ProductFormDialog({
         currency: 'MYR',
         status: 'ACTIVE',
         description: '',
-        imageUrl: '',
         categoryId: null,
       });
+      setPreviewUrl(null);
     }
   }, [product, open, form]);
 
@@ -113,17 +127,41 @@ export default function ProductFormDialog({
   });
 
   const createMut = useMutation({
-    mutationFn: (v: FormValues) =>
-      createProduct({
+    mutationFn: async (v: FormValues) => {
+      const created = await createProduct({
         ...v,
         categoryId: v.categoryId ?? null,
         description: v.description || undefined,
-        imageUrl: v.imageUrl || undefined,
-      }),
+      });
+
+      if (imageFile) {
+        const up = await createProductImageUploadUrl({
+          productId: created.id,
+          filename: imageFile.name,
+          contentType: imageFile.type,
+          sizeBytes: imageFile.size,
+        });
+
+        await uploadToSupabaseSignedUrl({
+          signedUrl: up.signedUrl,
+          file: imageFile,
+        });
+
+        // 3) persist imagePath + public imageUrl
+        await commitProductImage(created.id, {
+          imagePath: up.path,
+          imageUrl: up.publicUrl,
+        });
+      }
+
+      return created;
+    },
     onSuccess: async () => {
       toast.success('Product created');
       await qc.invalidateQueries({ queryKey: ['products'] });
       onOpenChange?.(false);
+      setImageFile(null);
+      setPreviewUrl(null);
       form.reset();
     },
     onError: e =>
@@ -133,20 +171,43 @@ export default function ProductFormDialog({
   });
 
   const updateMut = useMutation({
-    mutationFn: (v: FormValues) =>
-      updateProduct(product!.id, {
+    mutationFn: async (v: FormValues) => {
+      const created = updateProduct(product!.id, {
         ...v,
         categoryId: v.categoryId ?? null,
         description: v.description || undefined,
-        imageUrl: v.imageUrl || undefined,
-      }),
+      });
+
+      if (imageFile) {
+        const up = await createProductImageUploadUrl({
+          productId: product!.id,
+          filename: imageFile.name,
+          contentType: imageFile.type,
+          sizeBytes: imageFile.size,
+        });
+
+        await uploadToSupabaseSignedUrl({
+          signedUrl: up.signedUrl,
+          file: imageFile,
+        });
+
+        await commitProductImage(product!.id, {
+          imagePath: up.path,
+          imageUrl: up.publicUrl,
+        });
+      }
+
+      return created;
+    },
     onSuccess: async () => {
-      toast('Product updated');
+      toast.success('Product updated');
       await qc.invalidateQueries({ queryKey: ['products'] });
       onOpenChange?.(false);
+      setImageFile(null);
+      setPreviewUrl(null);
     },
     onError: e =>
-      toast('Update failed', {
+      toast.error('Update failed', {
         description: getErrorMessage(e),
       }),
   });
@@ -255,12 +316,66 @@ export default function ProductFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Image URL</Label>
-            <Input {...form.register('imageUrl')} />
-            {form.formState.errors.imageUrl && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.imageUrl.message}
-              </p>
+            <Label>Product Image (optional)</Label>
+            <Input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={e => {
+                const f = e.target.files?.[0] ?? null;
+                if (!f) {
+                  setImageFile(null);
+                  setPreviewUrl(null);
+                  return;
+                }
+
+                if (!allowedTypes.has(f.type)) {
+                  toast.error('Invalid file type', {
+                    description: 'Use JPG / PNG / WEBP',
+                  });
+                  e.currentTarget.value = '';
+                  return;
+                }
+
+                if (f.size > MAX_IMAGE_BYTES) {
+                  toast.error('File too large', {
+                    description: 'Max 10MB',
+                  });
+                  e.currentTarget.value = '';
+                  return;
+                }
+
+                setImageFile(f);
+                setPreviewUrl(URL.createObjectURL(f));
+              }}
+            />
+
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="h-24 w-24 rounded object-cover border"
+              />
+            )}
+
+            {previewUrl && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={async () => {
+                  if (!product) return;
+                  await removeProductImage(
+                    product.id,
+                    product.imagePath ?? undefined
+                  );
+                  toast.success('Image removed');
+                  await qc.invalidateQueries({
+                    queryKey: ['products'],
+                  });
+                  setPreviewUrl(null);
+                }}
+              >
+                Remove image
+              </Button>
             )}
           </div>
 

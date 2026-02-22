@@ -114,6 +114,18 @@ export default function ProductsPage() {
 
   const columns: ColumnDef<Product>[] = [
     {
+      header: 'Product Image',
+      cell: p =>
+        p.imageUrl ? (
+          <img
+            src={p.imageUrl}
+            className="h-30 w-30 rounded object-cover border"
+          />
+        ) : (
+          <div className="h-30 w-30 rounded border opacity-40" />
+        ),
+    },
+    {
       header: 'Name',
       cell: p => <span className="font-medium">{p.name}</span>,
     },
