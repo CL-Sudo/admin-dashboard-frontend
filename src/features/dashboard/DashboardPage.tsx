@@ -48,6 +48,9 @@ import {
   PieChart,
   Cell,
 } from 'recharts';
+import KpiCardSkeleton from '@/components/dashboard/KpiCardSkeleton';
+import ChartSkeleton from '@/components/dashboard/ChartSkeleton';
+import TableSkeleton from '@/components/dashboard/TableSkeleton';
 
 type RangeDays = 7 | 30 | 90;
 
@@ -90,7 +93,7 @@ export default function DashboardPage() {
     {
       header: 'Product',
       cell: p => (
-        <Link to={`/products`} className="underline">
+        <Link to={`/products/${p.id}`} className="underline">
           {p.name}
         </Link>
       ),
@@ -110,7 +113,7 @@ export default function DashboardPage() {
     {
       header: 'Product',
       cell: p => (
-        <Link to={`/products`} className="underline">
+        <Link to={`/products/${p.id}`} className="underline">
           {p.name}
         </Link>
       ),
@@ -221,7 +224,9 @@ export default function DashboardPage() {
 
       {/* KPI Row */}
       {kpisQ.isLoading ? (
-        <div>Loading KPIs...</div>
+        Array.from({ length: 8 }).map((_, i) => (
+          <KpiCardSkeleton key={i} />
+        ))
       ) : kpisQ.error ? (
         <div className="text-red-500">
           {getErrorMessage(kpisQ.error)}
@@ -277,7 +282,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="h-[320px]">
           {trendQ.isLoading ? (
-            <div>Loading trend...</div>
+            <ChartSkeleton />
           ) : trendQ.error ? (
             <div className="text-red-500">
               {getErrorMessage(trendQ.error)}
@@ -438,7 +443,12 @@ export default function DashboardPage() {
 
         <CardContent className="space-y-6">
           {needsQ.isLoading ? (
-            <div>Loading...</div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <TableSkeleton />
+              <TableSkeleton />
+              <TableSkeleton />
+              <TableSkeleton />
+            </div>
           ) : needsQ.error ? (
             <div className="text-red-500">
               {getErrorMessage(needsQ.error)}
