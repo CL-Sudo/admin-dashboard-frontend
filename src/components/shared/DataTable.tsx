@@ -7,11 +7,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-export type ColumnDef<T> = {
+export interface ColumnDef<T> {
   header: string;
   cell: (row: T) => React.ReactNode;
   className?: string;
-};
+}
 
 export default function DataTable<T>({
   columns,
@@ -26,7 +26,7 @@ export default function DataTable<T>({
 }) {
   return (
     <div className="border rounded-md">
-      <Table>
+      <Table className="min-w-[900px]">
         <TableHeader>
           <TableRow>
             {columns.map((c, idx) => (
