@@ -76,6 +76,9 @@ export default function UserDetailPage() {
       setUserStatus(userId, s),
     onSuccess: async () => {
       toast('Status updated');
+      await qc.invalidateQueries({
+        queryKey: ['audit-user-detail', userId],
+      });
       await qc.invalidateQueries({ queryKey: usersKeys.all });
       await qc.invalidateQueries({
         queryKey: usersKeys.detail(userId),
