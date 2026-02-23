@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 import KpiCard from '@/components/dashboard/KpiCard';
@@ -46,7 +45,6 @@ import {
   YAxis,
   Pie,
   PieChart,
-  Cell,
 } from 'recharts';
 import KpiCardSkeleton from '@/components/dashboard/KpiCardSkeleton';
 import ChartSkeleton from '@/components/dashboard/ChartSkeleton';

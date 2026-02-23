@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   useMutation,
@@ -34,7 +34,6 @@ import {
 
 import {
   getProduct,
-  updateProduct,
   type Product,
 } from '@/api/products';
 import {
