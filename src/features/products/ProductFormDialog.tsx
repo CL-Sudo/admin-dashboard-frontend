@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import {
+  useForm,
+  useWatch,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useMutation,
@@ -14,7 +17,6 @@ import {
   removeProductImage,
   updateProduct,
   type Product,
-  type ProductStatus,
 } from '@/api/products';
 import { getCategories } from '@/api/categories';
 import { getErrorMessage } from '@/lib/httpError';
@@ -23,6 +25,7 @@ import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -40,14 +43,38 @@ import {
 } from '@/components/ui/select';
 import { uploadToSupabaseSignedUrl } from '@/lib/uploadSigned';
 import { productsKeys } from './products.keys';
+import { X } from 'lucide-react';
 
 const schema = z.object({
-  name: z.string().min(2),
-  sku: z.string().min(2),
-  priceCents: z.coerce.number().int().min(0),
-  currency: z.string().min(1).default('MYR'),
-  status: z.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']).default('ACTIVE'),
-  description: z.string().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(120, 'Name must be at most 120 characters'),
+  sku: z
+    .string()
+    .trim()
+    .min(2, 'SKU must be at least 2 characters')
+    .max(64, 'SKU must be at most 64 characters')
+    .regex(
+      /^[A-Za-z0-9._-]+$/,
+      'SKU can only contain letters, numbers, dot, underscore, and dash'
+    ),
+  priceCents: z
+    .number()
+    .int('Price must be a whole number in cents')
+    .min(0, 'Price cannot be negative'),
+  currency: z
+    .string()
+    .trim()
+    .length(3, 'Currency must be exactly 3 letters')
+    .regex(/^[A-Za-z]{3}$/, 'Currency must be letters only'),
+  status: z.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']),
+  description: z
+    .string()
+    .trim()
+    .max(2000, 'Description must be at most 2000 characters')
+    .optional(),
   categoryId: z.string().uuid().nullable().optional(),
 });
 
@@ -69,7 +96,8 @@ export default function ProductFormDialog({
   const isEdit = !!product?.id;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(schema),
+    mode: 'onChange',
     defaultValues: {
       name: '',
       sku: '',
@@ -82,10 +110,12 @@ export default function ProductFormDialog({
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    product?.imageUrl ?? null
-  );
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [removedImageProductId, setRemovedImageProductId] = useState<
+    string | null
+  >(null);
   const previewObjectUrlRef = useRef<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
   const allowedTypes = new Set([
@@ -94,17 +124,21 @@ export default function ProductFormDialog({
     'image/webp',
   ]);
 
-  const revokePreviewObjectUrl = () => {
+  const revokePreviewObjectUrl = useCallback(() => {
     if (!previewObjectUrlRef.current) return;
     URL.revokeObjectURL(previewObjectUrlRef.current);
     previewObjectUrlRef.current = null;
-  };
+  }, []);
 
-  const resetImageState = (nextPreview: string | null) => {
-    setImageFile(null);
-    revokePreviewObjectUrl();
-    setPreviewUrl(nextPreview);
-  };
+  const resetImageState = useCallback(
+    (nextPreview: string | null) => {
+      setImageFile(null);
+      revokePreviewObjectUrl();
+      setPreviewUrl(nextPreview);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    [revokePreviewObjectUrl]
+  );
 
   useEffect(() => {
     if (product) {
@@ -114,11 +148,10 @@ export default function ProductFormDialog({
         sku: product.sku,
         priceCents: product.priceCents,
         currency: product.currency ?? 'MYR',
-        status: (product.status ?? 'ACTIVE') as ProductStatus,
+        status: product.status ?? 'ACTIVE',
         description: product.description ?? '',
         categoryId: product.categoryId ?? null,
       });
-      resetImageState(product.imageUrl ?? null);
     } else if (open) {
       // Create mode: reset form when dialog opens
       form.reset({
@@ -130,13 +163,13 @@ export default function ProductFormDialog({
         description: '',
         categoryId: null,
       });
-      resetImageState(null);
-    } else {
-      resetImageState(null);
     }
   }, [product, open, form]);
 
-  useEffect(() => () => revokePreviewObjectUrl(), []);
+  useEffect(
+    () => () => revokePreviewObjectUrl(),
+    [revokePreviewObjectUrl]
+  );
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -148,7 +181,9 @@ export default function ProductFormDialog({
       const created = await createProduct({
         ...v,
         categoryId: v.categoryId ?? null,
-        description: v.description || undefined,
+        description: v.description?.trim()
+          ? v.description.trim()
+          : undefined,
       });
 
       if (imageFile) {
@@ -176,6 +211,7 @@ export default function ProductFormDialog({
     onSuccess: async () => {
       toast.success('Product created');
       await qc.invalidateQueries({ queryKey: productsKeys.all });
+      setRemovedImageProductId(null);
       onOpenChange?.(false);
       resetImageState(null);
       form.reset();
@@ -191,7 +227,9 @@ export default function ProductFormDialog({
       const updated = await updateProduct(product!.id, {
         ...v,
         categoryId: v.categoryId ?? null,
-        description: v.description || undefined,
+        description: v.description?.trim()
+          ? v.description.trim()
+          : undefined,
       });
 
       if (imageFile) {
@@ -224,6 +262,7 @@ export default function ProductFormDialog({
     onSuccess: async () => {
       toast.success('Product updated');
       await qc.invalidateQueries({ queryKey: productsKeys.all });
+      setRemovedImageProductId(null);
       onOpenChange?.(false);
       resetImageState(null);
     },
@@ -233,13 +272,67 @@ export default function ProductFormDialog({
       }),
   });
 
+  const removeImageMut = useMutation({
+    mutationFn: async () => {
+      if (!product) throw new Error('Missing product');
+      await removeProductImage(
+        product.id,
+        product.imagePath ?? undefined
+      );
+    },
+    onSuccess: async () => {
+      toast.success('Image removed');
+      setRemovedImageProductId(product?.id ?? null);
+      resetImageState(null);
+      await qc.invalidateQueries({ queryKey: productsKeys.all });
+      await qc.invalidateQueries({
+        queryKey: ['products', 'detail', product?.id],
+      });
+    },
+    onError: e =>
+      toast.error('Remove image failed', {
+        description: getErrorMessage(e),
+      }),
+  });
+
   const onSubmit = (v: FormValues) => {
     if (isEdit) return updateMut.mutate(v);
     return createMut.mutate(v);
   };
+  const submitHandler = form.handleSubmit(onSubmit);
+  const statusValue = useWatch({
+    control: form.control,
+    name: 'status',
+  });
+  const categoryValue = useWatch({
+    control: form.control,
+    name: 'categoryId',
+  });
+
+  const isSaving = createMut.isPending || updateMut.isPending;
+  const canSubmit =
+    form.formState.isValid &&
+    !isSaving &&
+    !removeImageMut.isPending &&
+    (!isEdit || form.formState.isDirty || !!imageFile);
+  const currentSavedImageUrl =
+    removedImageProductId === product?.id
+      ? null
+      : (product?.imageUrl ?? null);
+  const shownPreviewUrl = previewUrl ?? currentSavedImageUrl;
+  const hasSelectedImageFile = imageFile !== null;
+  const canRemoveSavedImage =
+    isEdit && currentSavedImageUrl !== null && !hasSelectedImageFile;
+  const handleDialogChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetImageState(null);
+      setRemovedImageProductId(null);
+    }
+    onOpenChange?.(nextOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       {trigger ? (
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : null}
@@ -249,16 +342,26 @@ export default function ProductFormDialog({
           <DialogTitle>
             {isEdit ? 'Edit Product' : 'Create Product'}
           </DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? 'Update product details and image.'
+              : 'Fill in the product details to create a new item.'}
+          </DialogDescription>
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={e => {
+            void submitHandler(e);
+          }}
           className="space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Name</Label>
-              <Input {...form.register('name')} />
+              <Input
+                {...form.register('name')}
+                placeholder="e.g. Wireless Mouse"
+              />
               {form.formState.errors.name && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.name.message}
@@ -268,7 +371,17 @@ export default function ProductFormDialog({
 
             <div className="space-y-2">
               <Label>SKU</Label>
-              <Input {...form.register('sku')} />
+              <Input
+                {...form.register('sku')}
+                placeholder="e.g. WM-1000"
+                onBlur={e => {
+                  form.setValue(
+                    'sku',
+                    e.target.value.trim().toUpperCase(),
+                    { shouldDirty: true, shouldValidate: true }
+                  );
+                }}
+              />
               {form.formState.errors.sku && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.sku.message}
@@ -278,7 +391,18 @@ export default function ProductFormDialog({
 
             <div className="space-y-2">
               <Label>Price (cents)</Label>
-              <Input type="number" {...form.register('priceCents')} />
+              <Input
+                type="number"
+                min={0}
+                step={1}
+                inputMode="numeric"
+                {...form.register('priceCents', {
+                  valueAsNumber: true,
+                })}
+              />
+              <p className="text-xs opacity-70">
+                Stored in cents. Example: 1999 = 19.99
+              </p>
               {form.formState.errors.priceCents && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.priceCents.message}
@@ -288,16 +412,41 @@ export default function ProductFormDialog({
 
             <div className="space-y-2">
               <Label>Currency</Label>
-              <Input {...form.register('currency')} />
+              <Input
+                maxLength={3}
+                {...form.register('currency')}
+                onBlur={e => {
+                  form.setValue(
+                    'currency',
+                    e.target.value.trim().toUpperCase(),
+                    { shouldDirty: true, shouldValidate: true }
+                  );
+                }}
+              />
+              {form.formState.errors.currency && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.currency.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
-                value={form.watch('status')}
-                onValueChange={v =>
-                  form.setValue('status', v as ProductStatus)
-                }
+                value={statusValue}
+                onValueChange={v => {
+                  if (
+                    v !== 'ACTIVE' &&
+                    v !== 'DRAFT' &&
+                    v !== 'ARCHIVED'
+                  ) {
+                    return;
+                  }
+                  form.setValue('status', v, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
@@ -313,9 +462,13 @@ export default function ProductFormDialog({
             <div className="space-y-2">
               <Label>Category</Label>
               <Select
-                value={form.watch('categoryId') ?? 'none'}
+                value={categoryValue ?? 'none'}
                 onValueChange={v =>
-                  form.setValue('categoryId', v === 'none' ? null : v)
+                  form.setValue(
+                    'categoryId',
+                    v === 'none' ? null : v,
+                    { shouldDirty: true, shouldValidate: true }
+                  )
                 }
               >
                 <SelectTrigger>
@@ -335,12 +488,23 @@ export default function ProductFormDialog({
 
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea rows={3} {...form.register('description')} />
+            <Textarea
+              rows={3}
+              maxLength={2000}
+              placeholder="Optional notes about this product"
+              {...form.register('description')}
+            />
+            {form.formState.errors.description && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.description.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Product Image (optional)</Label>
             <Input
+              ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/webp"
               onChange={e => {
@@ -370,34 +534,44 @@ export default function ProductFormDialog({
                 setPreviewUrl(objectUrl);
               }}
             />
+            <p className="text-xs opacity-70">
+              JPG, PNG, or WEBP. Maximum file size: 10MB.
+            </p>
 
-            {previewUrl && (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="h-24 w-24 rounded object-cover border"
-              />
-            )}
+            {shownPreviewUrl && (
+              <div className="relative h-24 w-24">
+                <img
+                  src={shownPreviewUrl}
+                  alt="Preview"
+                  className="h-24 w-24 rounded object-cover border"
+                />
 
-            {isEdit && previewUrl && !imageFile && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={async () => {
-                  if (!product) return;
-                  await removeProductImage(
-                    product.id,
-                    product.imagePath ?? undefined
-                  );
-                  toast.success('Image removed');
-                  await qc.invalidateQueries({
-                    queryKey: productsKeys.all,
-                  });
-                  setPreviewUrl(null);
-                }}
-              >
-                Remove image
-              </Button>
+                {(hasSelectedImageFile || canRemoveSavedImage) && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                    onClick={() => {
+                      if (hasSelectedImageFile) {
+                        resetImageState(null);
+                        return;
+                      }
+                      if (canRemoveSavedImage) {
+                        removeImageMut.mutate();
+                      }
+                    }}
+                    disabled={removeImageMut.isPending || isSaving}
+                    aria-label={
+                      hasSelectedImageFile
+                        ? 'Clear selected image'
+                        : 'Remove current image'
+                    }
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             )}
           </div>
 
@@ -405,19 +579,21 @@ export default function ProductFormDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange?.(false)}
+              onClick={() => handleDialogChange(false)}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={
-                form.formState.isSubmitting ||
-                createMut.isPending ||
-                updateMut.isPending
-              }
+              disabled={form.formState.isSubmitting || !canSubmit}
             >
-              {isEdit ? 'Save' : 'Create'}
+              {isSaving
+                ? isEdit
+                  ? 'Saving...'
+                  : 'Creating...'
+                : isEdit
+                  ? 'Save'
+                  : 'Create'}
             </Button>
           </div>
         </form>
