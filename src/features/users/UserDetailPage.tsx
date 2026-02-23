@@ -8,7 +8,6 @@ import {
 import {
   getUser,
   setUserStatus,
-  type UserRow,
   type UserStatus,
 } from '@/api/users';
 import { getAuditLogs } from '@/api/audit';

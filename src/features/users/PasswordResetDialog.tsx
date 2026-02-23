@@ -23,11 +23,11 @@ import { Copy, Check } from 'lucide-react';
 
 export default function PasswordResetDialog({
   open,
-  setResetOpen,
+  onOpenChange,
   user,
 }: {
   open: boolean;
-  setResetOpen: (v: boolean) => void;
+  onOpenChange: (v: boolean) => void;
   user: UserRow | null;
 }) {
   const mut = useMutation({
@@ -65,19 +65,19 @@ export default function PasswordResetDialog({
   const onClose = () => {
     setHasRequested(false);
     setCopied(false);
-    setResetOpen(false);
+    onOpenChange(false);
   };
 
-  const onOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setHasRequested(false);
       setCopied(false);
     }
-    setResetOpen(newOpen);
+    onOpenChange(newOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Request Password Reset</DialogTitle>
