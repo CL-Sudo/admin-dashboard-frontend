@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:staging": "vite --mode staging",
     "build": "tsc -b && vite build",
+    "build:staging": "tsc -b && vite build --mode staging",
     "lint": "eslint .",
     "preview": "vite preview",
+    "preview:staging": "vite preview --mode staging",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -60,3 +63,4 @@
     "vite": "^7.3.1"
   }
 }
+
