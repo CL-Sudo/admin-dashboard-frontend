@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { getUser, setUserStatus, type UserStatus } from '@/api/users';
-import { getAuditLogs } from '@/api/audit';
+import { getAuditLogs, type AuditLog } from '@/api/audit';
 import { usersKeys } from './users.keys';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/httpError';
@@ -66,7 +66,7 @@ export default function UserDetailPage() {
         entityId: userId,
         // Option B: actions performed by the user (uncomment if you want)
         // actorUserId: userId,
-      } as any),
+      }),
     enabled: !!userId,
   });
 
@@ -101,7 +101,7 @@ export default function UserDetailPage() {
     });
   }, [auditQ.data, userId]);
 
-  const cols: ColumnDef<any>[] = [
+  const cols: ColumnDef<AuditLog>[] = [
     {
       header: 'Time',
       cell: a => new Date(a.createdAt).toLocaleString(),
@@ -109,7 +109,7 @@ export default function UserDetailPage() {
     {
       header: 'Actor',
       cell: a =>
-        a.actor?.email ?? (a.actorUserId ? a.actorUserId : 'System'),
+        a.actor?.email ?? a.actorUserId ?? 'System',
     },
     {
       header: 'Action',
@@ -132,7 +132,9 @@ export default function UserDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => nav('/users')}
+              onClick={() => {
+                void nav('/users');
+              }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back

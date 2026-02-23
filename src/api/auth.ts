@@ -1,18 +1,18 @@
 import { api } from './client';
 
-export type LoginResponse = {
+export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-};
+}
 
-export type LogoutResponse = {
+export interface LogoutResponse {
   success: boolean;
-};
+}
 
-export type ResetPasswordInput = {
+export interface ResetPasswordInput {
   resetToken: string;
   newPassword: string;
-};
+}
 
 export async function login(email: string, password: string) {
   const res = await api.post<LoginResponse>('/auth/login', {

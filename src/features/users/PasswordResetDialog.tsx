@@ -20,6 +20,9 @@ import {
 } from '@/components/ui/tooltip';
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+type ResetResponse = Awaited<
+  ReturnType<typeof requestUserPasswordReset>
+>;
 
 export default function PasswordResetDialog({
   open,
@@ -47,8 +50,15 @@ export default function PasswordResetDialog({
   const [hasRequested, setHasRequested] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const resetToken = (mut.data as any)?.resetToken;
-  const expiresAt = (mut.data as any)?.expiresAt;
+  const resetData: ResetResponse | undefined = mut.data;
+  const resetToken =
+    resetData && 'resetToken' in resetData
+      ? resetData.resetToken
+      : undefined;
+  const expiresAt =
+    resetData && 'expiresAt' in resetData
+      ? resetData.expiresAt
+      : undefined;
 
   const handleCopy = async () => {
     if (!resetToken) return;
@@ -57,7 +67,7 @@ export default function PasswordResetDialog({
       toast.success('Token copied to clipboard');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy token');
     }
   };
@@ -115,7 +125,9 @@ export default function PasswordResetDialog({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleCopy}
+                        onClick={() => {
+                          void handleCopy();
+                        }}
                         className="shrink-0"
                       >
                         {copied ? (

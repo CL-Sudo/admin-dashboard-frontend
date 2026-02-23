@@ -1,13 +1,31 @@
-import type { AxiosError } from 'axios';
+import { isAxiosError } from 'axios';
+
+function extractMessage(data: unknown): string | string[] | undefined {
+  if (typeof data !== 'object' || data === null) return undefined;
+
+  const record = data as Record<string, unknown>;
+  const message = record.message;
+  if (typeof message === 'string' || Array.isArray(message)) {
+    return message;
+  }
+
+  const error = record.error;
+  if (typeof error === 'string' || Array.isArray(error)) {
+    return error;
+  }
+
+  return undefined;
+}
 
 export function getErrorMessage(err: unknown): string {
-  // Axios error
-  const ax = err as AxiosError<any>;
-  const msg =
-    ax?.response?.data?.message ||
-    ax?.response?.data?.error ||
-    ax?.message ||
-    'Something went wrong';
-  if (Array.isArray(msg)) return msg.join(', ');
-  return String(msg);
+  if (isAxiosError(err)) {
+    const msg =
+      extractMessage(err.response?.data) ??
+      err.message ??
+      'Something went wrong';
+
+    return Array.isArray(msg) ? msg.join(', ') : String(msg);
+  }
+
+  return err instanceof Error ? err.message : 'Something went wrong';
 }

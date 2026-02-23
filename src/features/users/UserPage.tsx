@@ -8,6 +8,7 @@ import {
 import {
   getUsers,
   setUserStatus,
+  type Paged,
   type RoleName,
   type UserRow,
   type UserStatus,
@@ -46,6 +47,14 @@ import UserRolesDialog from './UserRolesDialog';
 import PasswordResetDialog from './PasswordResetDialog';
 
 import { Plus, Shield, KeyRound, Pencil } from 'lucide-react';
+
+function isUserStatus(value: string): value is UserStatus {
+  return value === 'ACTIVE' || value === 'DISABLED';
+}
+
+function isRoleName(value: string): value is RoleName {
+  return value === 'ADMIN' || value === 'STAFF' || value === 'VIEWER';
+}
 
 export default function UsersPage() {
   const qc = useQueryClient();
@@ -92,21 +101,24 @@ export default function UsersPage() {
         queryKey: usersKeys.all,
       });
 
-      qc.setQueriesData({ queryKey: usersKeys.all }, (old: any) => {
-        if (!old?.data) return old;
-        return {
-          ...old,
-          data: old.data.map((u: UserRow) =>
-            u.id === id ? { ...u, status: s } : u
-          ),
-        };
-      });
+      qc.setQueriesData<Paged<UserRow>>(
+        { queryKey: usersKeys.all },
+        old => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: old.data.map(u =>
+              u.id === id ? { ...u, status: s } : u
+            ),
+          };
+        }
+      );
 
       return { snapshots };
     },
 
     onError: (e, _vars, ctx) => {
-      ctx?.snapshots?.forEach(([key, data]: any) =>
+      ctx?.snapshots?.forEach(([key, data]) =>
         qc.setQueryData(key, data)
       );
       toast('Status change failed', {
@@ -270,7 +282,9 @@ export default function UsersPage() {
           <Select
             value={status}
             onValueChange={v => {
-              setStatus(v as any);
+              if (v === 'all' || isUserStatus(v)) {
+                setStatus(v);
+              }
               setPage(1);
             }}
           >
@@ -287,7 +301,9 @@ export default function UsersPage() {
           <Select
             value={role}
             onValueChange={v => {
-              setRole(v as any);
+              if (v === 'all' || isRoleName(v)) {
+                setRole(v);
+              }
               setPage(1);
             }}
           >

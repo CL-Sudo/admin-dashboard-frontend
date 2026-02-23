@@ -2,13 +2,13 @@ import { logout } from '@/api/auth';
 import { tokenStorage } from '@/lib/storage';
 import { authEvents } from './auth.events';
 
-type JwtPayload = {
+interface JwtPayload {
   sub: string;
   email: string;
   roles: string[];
   exp?: number;
   iat?: number;
-};
+}
 
 function base64UrlDecode(input: string) {
   // base64url -> base64
@@ -18,14 +18,27 @@ function base64UrlDecode(input: string) {
     '='
   );
   const json = atob(padded);
-  return JSON.parse(json);
+  return JSON.parse(json) as unknown;
+}
+
+function isJwtPayload(value: unknown): value is JwtPayload {
+  if (typeof value !== 'object' || value === null) return false;
+  const record = value as Record<string, unknown>;
+
+  return (
+    typeof record.sub === 'string' &&
+    typeof record.email === 'string' &&
+    Array.isArray(record.roles) &&
+    record.roles.every(role => typeof role === 'string')
+  );
 }
 
 export function decodeJwt(token: string): JwtPayload | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    return base64UrlDecode(parts[1]) as JwtPayload;
+    const payload = base64UrlDecode(parts[1]);
+    return isJwtPayload(payload) ? payload : null;
   } catch {
     return null;
   }
@@ -58,12 +71,8 @@ export const authStore = {
     return !!u?.roles?.includes(role);
   },
   logout: async () => {
-    try {
-      await logout();
-      tokenStorage.clear();
-      authEvents.emitLogout();
-    } catch (error) {
-      throw error;
-    }
+    await logout();
+    tokenStorage.clear();
+    authEvents.emitLogout();
   },
 };

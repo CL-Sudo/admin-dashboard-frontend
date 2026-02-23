@@ -8,7 +8,11 @@ export default function NotFoundPage() {
       <div className="space-y-3 text-center">
         <div className="text-2xl font-semibold">404</div>
         <div className="opacity-70">Page not found</div>
-        <Button onClick={() => nav('/', { replace: true })}>
+        <Button
+          onClick={() => {
+            void nav('/', { replace: true });
+          }}
+        >
           Go home
         </Button>
       </div>

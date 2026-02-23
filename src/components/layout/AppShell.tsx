@@ -9,7 +9,7 @@ export default function AppShell() {
 
   useEffect(() => {
     const unsubscribe = authEvents.onLogout(() => {
-      navigate('/login', { replace: true });
+      void navigate('/login', { replace: true });
     });
 
     return () => {

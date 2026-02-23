@@ -3,7 +3,7 @@ import { api } from './client';
 export type UserStatus = 'ACTIVE' | 'DISABLED';
 export type RoleName = 'ADMIN' | 'STAFF' | 'VIEWER';
 
-export type UserRow = {
+export interface UserRow {
   id: string;
   email: string;
   name: string;
@@ -12,9 +12,9 @@ export type UserRow = {
   createdAt: string;
   updatedAt?: string;
   lastLoginAt?: string | null;
-};
+}
 
-export type Paged<T> = {
+export interface Paged<T> {
   data: T[];
   meta: {
     page: number;
@@ -22,9 +22,9 @@ export type Paged<T> = {
     total: number;
     totalPages: number;
   };
-};
+}
 
-export type ListUsersParams = {
+export interface ListUsersParams {
   search?: string;
   status?: UserStatus;
   role?: RoleName;
@@ -32,14 +32,14 @@ export type ListUsersParams = {
   limit?: number;
   sort?: 'createdAt' | 'email' | 'name' | 'lastLoginAt';
   order?: 'asc' | 'desc';
-};
+}
 
-export type CreateUserInput = {
+export interface CreateUserInput {
   email: string;
   name: string;
   initialPassword?: string;
   roles?: RoleName[];
-};
+}
 
 export type UpdateUserInput = Partial<
   Pick<CreateUserInput, 'email' | 'name'>

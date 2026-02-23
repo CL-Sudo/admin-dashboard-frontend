@@ -37,7 +37,7 @@ export default function LoginPage() {
       const data = await login(v.email, v.password);
       tokenStorage.setAccess(data.accessToken);
       tokenStorage.setRefresh(data.refreshToken);
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     } catch (err: unknown) {
       const message =
         (err as AxiosError).response?.status === 401
@@ -62,7 +62,10 @@ export default function LoginPage() {
             </Alert>
           )}
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={event => {
+              event.preventDefault();
+              void form.handleSubmit(values => onSubmit(values))(event);
+            }}
             className="space-y-4"
           >
             <div className="space-y-2">

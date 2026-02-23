@@ -13,8 +13,8 @@ export default function Topbar() {
   const user = authStore.getUser();
 
   const logout = () => {
-    authStore.logout();
-    nav('/login', { replace: true });
+    void authStore.logout();
+    void nav('/login', { replace: true });
   };
 
   return (
@@ -26,7 +26,11 @@ export default function Topbar() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => nav('/')}>
+          <DropdownMenuItem
+            onClick={() => {
+              void nav('/');
+            }}
+          >
             Dashboard
           </DropdownMenuItem>
           <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>

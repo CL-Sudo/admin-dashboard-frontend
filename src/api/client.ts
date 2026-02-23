@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import { env } from '@/lib/env';
 import { tokenStorage } from '@/lib/storage';
 import { authEvents } from '@/features/auth/auth.events';
@@ -10,12 +11,23 @@ export const api = axios.create({
   baseURL: env.apiBaseUrl,
 });
 
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 let isRefreshing = false;
-let queue: Array<(token: string | null) => void> = [];
+let queue: ((token: string | null) => void)[] = [];
 
 api.interceptors.request.use(config => {
   const token = tokenStorage.getAccess();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -23,12 +35,19 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   // If the API returns a 200 OK or 201 Created, the interceptor does nothing
   res => res,
-  async error => {
-    const original = error.config;
+  async (error: unknown) => {
+    if (!axios.isAxiosError(error)) {
+      throw new Error('Request failed');
+    }
+
+    const original = error.config as RetryableRequestConfig | undefined;
     const status = error.response?.status;
 
     // check if the status is 401 or the request has already been retried
-    if (status !== 401 || original?._retry) throw error;
+    if (!original || status !== 401 || original._retry) {
+      throw error;
+    }
+
     original._retry = true; // mark the request as retried
 
     // "Is there a way to save this session? No? Then blow it all up and log the user out."
@@ -46,20 +65,27 @@ api.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         queue.push(token => {
-          if (!token) return reject(error);
+          if (!token) {
+            reject(new Error('Token refresh failed'));
+            return;
+          }
+
           original.headers.Authorization = `Bearer ${token}`;
-          resolve(api(original));
+          void resolve(api(original));
         });
       });
     }
     isRefreshing = true;
 
     try {
-      const r = await axios.post(`${env.apiBaseUrl}/auth/refresh`, {
-        refreshToken: refresh,
-      });
-      const newAccess = r.data.accessToken as string;
-      const newRefresh = r.data.refreshToken as string;
+      const r = await axios.post<RefreshResponse>(
+        `${env.apiBaseUrl}/auth/refresh`,
+        {
+          refreshToken: refresh,
+        }
+      );
+      const newAccess = r.data.accessToken;
+      const newRefresh = r.data.refreshToken;
 
       tokenStorage.setAccess(newAccess);
       tokenStorage.setRefresh(newRefresh);
@@ -69,12 +95,14 @@ api.interceptors.response.use(
 
       original.headers.Authorization = `Bearer ${newAccess}`;
       return api(original);
-    } catch (e) {
+    } catch (refreshError: unknown) {
       queue.forEach(fn => fn(null));
       queue = [];
       authEvents.emitLogout();
       tokenStorage.clear();
-      throw e;
+      throw refreshError instanceof Error
+        ? refreshError
+        : new Error('Token refresh failed');
     } finally {
       isRefreshing = false;
     }

@@ -1,17 +1,17 @@
 import { api } from './client';
 
-export type AuditLog = {
+export interface AuditLog {
   id: string;
   action: string;
   entityType: string;
   entityId?: string | null;
   createdAt: string;
   actorUserId?: string | null;
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
   actor?: { id: string; email: string; name: string } | null;
-};
+}
 
-export type Paged<T> = {
+export interface Paged<T> {
   data: T[];
   meta: {
     page: number;
@@ -19,7 +19,7 @@ export type Paged<T> = {
     total: number;
     totalPages: number;
   };
-};
+}
 
 export async function getAuditLogs(params?: {
   page?: number;

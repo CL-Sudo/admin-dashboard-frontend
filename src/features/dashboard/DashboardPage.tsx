@@ -51,6 +51,12 @@ import ChartSkeleton from '@/components/dashboard/ChartSkeleton';
 import TableSkeleton from '@/components/dashboard/TableSkeleton';
 
 type RangeDays = 7 | 30 | 90;
+type NeedsAttentionData = Awaited<ReturnType<typeof getNeedsAttention>>;
+type MissingImageRow = NeedsAttentionData['missingImages'][number];
+type NoCategoryRow = NeedsAttentionData['noCategory'][number];
+type DisabledUserRow =
+  NeedsAttentionData['recentlyDisabledUsers'][number];
+type PendingResetRow = NeedsAttentionData['pendingResets'][number];
 
 export default function DashboardPage() {
   const [days, setDays] = useState<RangeDays>(30);
@@ -87,7 +93,7 @@ export default function DashboardPage() {
   // But Pie still needs something; omit <Cell> entirely to let defaults apply.
   const topCategories = catQ.data?.top ?? [];
 
-  const missingImagesCols: ColumnDef<any>[] = [
+  const missingImagesCols: ColumnDef<MissingImageRow>[] = [
     {
       header: 'Product',
       cell: p => (
@@ -107,7 +113,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const noCategoryCols: ColumnDef<any>[] = [
+  const noCategoryCols: ColumnDef<NoCategoryRow>[] = [
     {
       header: 'Product',
       cell: p => (
@@ -127,7 +133,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const disabledUsersCols: ColumnDef<any>[] = [
+  const disabledUsersCols: ColumnDef<DisabledUserRow>[] = [
     {
       header: 'User',
       cell: u => (
@@ -150,7 +156,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const resetCols: ColumnDef<any>[] = [
+  const resetCols: ColumnDef<PendingResetRow>[] = [
     {
       header: 'User',
       cell: r => (
@@ -182,9 +188,9 @@ export default function DashboardPage() {
 
   const productStatusSummary = useMemo(() => {
     const s = kpisQ.data?.products.status ?? {};
-    const active = s['ACTIVE'] ?? 0;
-    const draft = s['DRAFT'] ?? 0;
-    const archived = s['ARCHIVED'] ?? 0;
+    const active = s.ACTIVE ?? 0;
+    const draft = s.DRAFT ?? 0;
+    const archived = s.ARCHIVED ?? 0;
     return { active, draft, archived };
   }, [kpisQ.data]);
 

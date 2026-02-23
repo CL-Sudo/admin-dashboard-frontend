@@ -1,5 +1,6 @@
 const getRequiredEnv = (name: string): string => {
-  const value = import.meta.env[name];
+  const envMap: Record<string, unknown> = import.meta.env;
+  const value = envMap[name];
 
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error(`Missing required environment variable: ${name}`);

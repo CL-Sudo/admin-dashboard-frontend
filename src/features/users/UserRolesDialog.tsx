@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   setUserRoles,
@@ -35,11 +35,8 @@ export default function UserRolesDialog({
   user: UserRow | null;
 }) {
   const qc = useQueryClient();
-  const [role, setRole] = useState<RoleName>('VIEWER');
-
-  useEffect(() => {
-    if (user?.roles?.length) setRole(user.roles[0]);
-  }, [user]);
+  const [draftRole, setDraftRole] = useState<RoleName | null>(null);
+  const role = draftRole ?? user?.roles?.[0] ?? 'VIEWER';
 
   const mut = useMutation({
     mutationFn: () => setUserRoles(user!.id, [role]),
@@ -55,7 +52,15 @@ export default function UserRolesDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={nextOpen => {
+        if (!nextOpen) {
+          setDraftRole(null);
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Update Roles</DialogTitle>
@@ -71,7 +76,15 @@ export default function UserRolesDialog({
             <Label>Role</Label>
             <Select
               value={role}
-              onValueChange={v => setRole(v as RoleName)}
+              onValueChange={v => {
+                if (
+                  v === 'ADMIN' ||
+                  v === 'STAFF' ||
+                  v === 'VIEWER'
+                ) {
+                  setDraftRole(v);
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />

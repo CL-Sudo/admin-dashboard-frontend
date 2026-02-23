@@ -1,6 +1,6 @@
 import { api } from './client';
 
-export type Category = { id: string; name: string };
+export interface Category { id: string; name: string }
 
 export async function getCategories() {
   const res = await api.get<Category[]>('/categories');
@@ -20,6 +20,6 @@ export async function updateCategory(id: string, name: string) {
 }
 
 export async function deleteCategory(id: string) {
-  const res = await api.delete(`/categories/${id}`);
+  const res = await api.delete<void>(`/categories/${id}`);
   return res.data;
 }

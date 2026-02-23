@@ -56,7 +56,7 @@ export default function ProductsPage() {
   const debouncedSearch = useDebounce(search, 200);
 
   const [status, setStatus] = useState<ProductStatus | 'all'>('all');
-  const [categoryId, setCategoryId] = useState<string | 'all'>('all');
+  const [categoryId, setCategoryId] = useState('all');
   const [page, setPage] = useState(1);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -293,7 +293,7 @@ export default function ProductsPage() {
               <DialogTitle>Delete product?</DialogTitle>
               <DialogDescription>
                 {pendingDelete
-                  ? `This will permanently delete \"${pendingDelete.name}\".`
+                  ? `This will permanently delete "${pendingDelete.name}".`
                   : 'This will permanently delete the selected product.'}
               </DialogDescription>
             </DialogHeader>

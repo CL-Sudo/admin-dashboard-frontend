@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import type { BadgeProps } from '@/components/ui/badge';
 import type { UserStatus } from '@/api/users';
 
 export default function UserStatusBadge({
@@ -7,5 +8,5 @@ export default function UserStatusBadge({
   status: UserStatus;
 }) {
   const variant = status === 'ACTIVE' ? 'default' : 'outline';
-  return <Badge variant={variant as any}>{status}</Badge>;
+  return <Badge variant={variant as BadgeProps['variant']}>{status}</Badge>;
 }

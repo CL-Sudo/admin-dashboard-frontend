@@ -61,7 +61,7 @@ export default function ResetPasswordPage() {
       toast('Password updated', {
         description: 'You can now log in with your new password.',
       });
-      nav('/login', { replace: true });
+      void nav('/login', { replace: true });
     },
     onError: e =>
       toast('Reset failed', {
@@ -77,7 +77,10 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardContent>
           <form
-            onSubmit={form.handleSubmit(v => mut.mutate(v))}
+            onSubmit={event => {
+              event.preventDefault();
+              void form.handleSubmit(values => mut.mutate(values))(event);
+            }}
             className="space-y-4"
           >
             <div className="space-y-2">
@@ -178,7 +181,9 @@ export default function ResetPasswordPage() {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => nav('/login')}
+              onClick={() => {
+                void nav('/login');
+              }}
             >
               Back to login
             </Button>

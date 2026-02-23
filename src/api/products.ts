@@ -2,7 +2,7 @@ import { api } from './client';
 
 export type ProductStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
 
-export type Product = {
+export interface Product {
   id: string;
   name: string;
   sku: string;
@@ -15,9 +15,9 @@ export type Product = {
   categoryId?: string | null;
   updatedAt: string;
   category?: { id: string; name: string } | null;
-};
+}
 
-export type Paged<T> = {
+export interface Paged<T> {
   data: T[];
   meta: {
     page: number;
@@ -25,9 +25,9 @@ export type Paged<T> = {
     total: number;
     totalPages: number;
   };
-};
+}
 
-export type ProductListParams = {
+export interface ProductListParams {
   search?: string;
   status?: ProductStatus;
   categoryId?: string;
@@ -35,9 +35,9 @@ export type ProductListParams = {
   limit?: number;
   sort?: 'createdAt' | 'priceCents' | 'name';
   order?: 'asc' | 'desc';
-};
+}
 
-export type UpsertProductInput = {
+export interface UpsertProductInput {
   name: string;
   sku: string;
   priceCents: number;
@@ -47,7 +47,7 @@ export type UpsertProductInput = {
   imageUrl?: string;
   imagePath?: string;
   categoryId?: string | null;
-};
+}
 
 // <Product> replaces the T[] in Paged<T> so the response data will be typed as Paged<Product>.
 export async function getProducts(params?: ProductListParams) {
@@ -74,7 +74,7 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string) {
-  const res = await api.delete(`/products/${id}`);
+  const res = await api.delete<void>(`/products/${id}`);
   return res.data;
 }
 
@@ -103,7 +103,7 @@ export async function commitProductImage(
     imageUrl: string | null;
   }
 ) {
-  const res = await api.post(
+  const res = await api.post<void>(
     `/products/${productId}/image/commit`,
     input
   );
@@ -114,7 +114,7 @@ export async function removeProductImage(
   productId: string,
   expectedImagePath?: string
 ) {
-  const res = await api.post(`/products/${productId}/image/remove`, {
+  const res = await api.post<void>(`/products/${productId}/image/remove`, {
     expectedImagePath,
   });
   return res.data;

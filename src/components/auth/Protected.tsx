@@ -13,7 +13,7 @@ export default function Protected({
   const token = authStore.getAccessToken();
   if (!token) return <Navigate to="/login" replace />;
   if (isTokenExpired(token)) {
-    authStore.logout();
+    void authStore.logout();
     return <Navigate to="/login" replace />;
   }
   return children;

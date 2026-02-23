@@ -32,14 +32,14 @@ import {
   Upload,
 } from 'lucide-react';
 
-import { getProduct, type Product } from '@/api/products';
+import { getProduct } from '@/api/products';
 import {
   createProductImageUploadUrl,
   commitProductImage,
   removeProductImage,
 } from '@/api/products';
 import { uploadToSupabaseSignedUrl } from '@/lib/uploadSigned';
-import { getAuditLogs } from '@/api/audit';
+import { getAuditLogs, type AuditLog } from '@/api/audit';
 
 import ProductFormDialog from './ProductFormDialog';
 
@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
     enabled: !!productId,
   });
 
-  const product = productQ.data as Product | undefined;
+  const product = productQ.data;
 
   const uploadMut = useMutation({
     mutationFn: async () => {
@@ -143,7 +143,7 @@ export default function ProductDetailPage() {
       }),
   });
 
-  const activityCols: ColumnDef<any>[] = [
+  const activityCols: ColumnDef<AuditLog>[] = [
     {
       header: 'Time',
       cell: a => new Date(a.createdAt).toLocaleString(),
@@ -151,7 +151,7 @@ export default function ProductDetailPage() {
     {
       header: 'Actor',
       cell: a =>
-        a.actor?.email ?? (a.actorUserId ? a.actorUserId : 'System'),
+        a.actor?.email ?? a.actorUserId ?? 'System',
     },
     {
       header: 'Action',
@@ -199,7 +199,9 @@ export default function ProductDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => nav('/products')}
+              onClick={() => {
+                void nav('/products');
+              }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back

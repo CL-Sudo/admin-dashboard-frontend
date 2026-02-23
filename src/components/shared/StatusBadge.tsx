@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import type { BadgeProps } from '@/components/ui/badge';
 
 export default function StatusBadge({ value }: { value: string }) {
   const v = value.toUpperCase();
@@ -11,5 +12,5 @@ export default function StatusBadge({ value }: { value: string }) {
         ? 'secondary'
         : 'outline';
 
-  return <Badge variant={variant as any}>{v}</Badge>;
+  return <Badge variant={variant as BadgeProps['variant']}>{v}</Badge>;
 }

@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createUser,
   updateUser,
-  type RoleName,
   type UserRow,
 } from '@/api/users';
 import { usersKeys } from './users.keys';
@@ -59,6 +58,10 @@ export default function UserFormDialog({
       role: 'VIEWER',
     },
   });
+  const selectedRole = useWatch({
+    control: form.control,
+    name: 'role',
+  });
 
   useEffect(() => {
     if (user) {
@@ -66,7 +69,7 @@ export default function UserFormDialog({
         email: user.email,
         name: user.name,
         initialPassword: '',
-        role: (user.roles?.[0] ?? 'VIEWER') as RoleName,
+        role: (user.roles?.[0] ?? 'VIEWER'),
       });
     } else if (open) {
       form.reset({
@@ -79,13 +82,18 @@ export default function UserFormDialog({
   }, [user, form, open]);
 
   const createMut = useMutation({
-    mutationFn: (v: FormValues) =>
-      createUser({
+    mutationFn: (v: FormValues) => {
+      const initialPassword = v.initialPassword?.trim();
+      return createUser({
         email: v.email,
         name: v.name,
-        initialPassword: v.initialPassword?.trim() || undefined,
+        initialPassword:
+          initialPassword && initialPassword.length > 0
+            ? initialPassword
+            : undefined,
         roles: [v.role],
-      }),
+      });
+    },
     onSuccess: async () => {
       toast('User created');
       await qc.invalidateQueries({ queryKey: usersKeys.all });
@@ -128,7 +136,7 @@ export default function UserFormDialog({
     if (isEdit) return updateMut.mutate(v);
     return createMut.mutate({
       ...v,
-      initialPassword: pwd || undefined,
+      initialPassword: pwd && pwd.length > 0 ? pwd : undefined,
     });
   };
 
@@ -142,7 +150,10 @@ export default function UserFormDialog({
         </DialogHeader>
 
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={event => {
+            event.preventDefault();
+            void form.handleSubmit(values => onSubmit(values))(event);
+          }}
           className="space-y-4"
         >
           <div className="space-y-2">
@@ -188,8 +199,16 @@ export default function UserFormDialog({
             <div className="space-y-2">
               <Label>Role</Label>
               <Select
-                value={form.watch('role')}
-                onValueChange={v => form.setValue('role', v as any)}
+                value={selectedRole}
+                onValueChange={v => {
+                  if (
+                    v === 'ADMIN' ||
+                    v === 'STAFF' ||
+                    v === 'VIEWER'
+                  ) {
+                    form.setValue('role', v);
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
