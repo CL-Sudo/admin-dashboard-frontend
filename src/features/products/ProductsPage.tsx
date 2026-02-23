@@ -131,10 +131,12 @@ export default function ProductsPage() {
     },
     {
       header: 'Name',
+      className: 'max-w-[250px]',
       cell: p => (
         <Link
           to={`/products/${p.id}`}
-          className="font-medium underline"
+          className="block truncate font-medium underline"
+          title={p.name}
         >
           {p.name}
         </Link>
@@ -195,7 +197,6 @@ export default function ProductsPage() {
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>Products</CardTitle>
-          <div className="text-sm opacity-70">Debounced search</div>
         </div>
 
         <RoleGate allow={['ADMIN', 'STAFF']}>
