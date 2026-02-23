@@ -32,10 +32,7 @@ import {
   Upload,
 } from 'lucide-react';
 
-import {
-  getProduct,
-  type Product,
-} from '@/api/products';
+import { getProduct, type Product } from '@/api/products';
 import {
   createProductImageUploadUrl,
   commitProductImage,
@@ -355,11 +352,6 @@ export default function ProductDetailPage() {
                     <Trash2 className="h-4 w-4 mr-2" />
                     Remove
                   </Button>
-                </div>
-
-                <div className="text-xs opacity-70">
-                  Upload uses signed URL → commit endpoint updates DB
-                  and deletes old image server-side.
                 </div>
               </div>
             </div>

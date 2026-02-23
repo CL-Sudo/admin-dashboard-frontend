@@ -33,8 +33,6 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-      // { path: '', element: <DashboardPage /> }, // or "/dashboard"
-      // { path: 'dashboard', element: <DashboardPage /> },
       {
         path: 'users',
         element: (

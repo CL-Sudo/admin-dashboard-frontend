@@ -18,9 +18,7 @@ export default function Topbar() {
   };
 
   return (
-    <header className="h-14 border-b flex items-center justify-between px-6">
-      <div className="text-sm opacity-80">Enterprise scaffold</div>
-
+    <header className="h-14 border-b flex items-center justify-end px-6">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">

@@ -17,7 +17,6 @@ export default function Sidebar() {
     <aside className="w-64 border-r bg-background">
       <div className="p-4 border-b">
         <div className="font-semibold">Admin Dashboard</div>
-        <div className="text-xs opacity-70">NestJS + React</div>
       </div>
 
       <nav className="p-3 space-y-1">

@@ -5,11 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import {
-  getUser,
-  setUserStatus,
-  type UserStatus,
-} from '@/api/users';
+import { getUser, setUserStatus, type UserStatus } from '@/api/users';
 import { getAuditLogs } from '@/api/audit';
 import { usersKeys } from './users.keys';
 import { toast } from 'sonner';
@@ -252,15 +248,6 @@ export default function UserDetailPage() {
                     : '-'}
                 </div>
               </div>
-            </div>
-
-            <Separator />
-
-            <div className="text-xs opacity-70">
-              Note: “Activity Trail” is filtered from the latest 100
-              audit logs. If you want true pagination + accuracy, add
-              `entityId`/`entityType` filters to the backend `/audit`
-              endpoint.
             </div>
           </CardContent>
         </Card>
