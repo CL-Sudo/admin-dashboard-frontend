@@ -176,6 +176,8 @@ export default function CategoriesPage() {
                               }
                               disabled={
                                 !editName.trim() ||
+                                editName.trim() ===
+                                  c.name.trim() ||
                                 updateMut.isPending
                               }
                             >
