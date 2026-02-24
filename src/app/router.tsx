@@ -6,7 +6,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import ProductsPage from '@/features/products/ProductsPage';
 import CategoriesPage from '@/features/categories/CategoriesPage';
 import AuditLogsPage from '@/features/audit/AuditLogsPage';
-// import DashboardPage from '@/pages/DashboardPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import UserPage from '@/features/users/UserPage';
 import UserDetailPage from '@/features/users/UserDetailPage';

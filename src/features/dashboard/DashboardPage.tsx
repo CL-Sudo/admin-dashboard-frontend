@@ -51,7 +51,9 @@ import ChartSkeleton from '@/components/dashboard/ChartSkeleton';
 import TableSkeleton from '@/components/dashboard/TableSkeleton';
 
 type RangeDays = 7 | 30 | 90;
-type NeedsAttentionData = Awaited<ReturnType<typeof getNeedsAttention>>;
+type NeedsAttentionData = Awaited<
+  ReturnType<typeof getNeedsAttention>
+>;
 type MissingImageRow = NeedsAttentionData['missingImages'][number];
 type NoCategoryRow = NeedsAttentionData['noCategory'][number];
 type DisabledUserRow =
@@ -88,9 +90,6 @@ export default function DashboardPage() {
 
   const statusDonutData = prodStatusQ.data ?? [];
 
-  // Recharts requires a color per slice; you asked earlier "never specify colors" only applied to python charts.
-  // Here we will avoid custom palettes: use default rendering by not setting fill per cell.
-  // But Pie still needs something; omit <Cell> entirely to let defaults apply.
   const topCategories = catQ.data?.top ?? [];
 
   const missingImagesCols: ColumnDef<MissingImageRow>[] = [

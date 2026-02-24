@@ -94,7 +94,6 @@ export default function UsersPage() {
     mutationFn: ({ id, s }: { id: string; s: UserStatus }) =>
       setUserStatus(id, s),
 
-    // optimistic status patch across all users lists
     onMutate: async ({ id, s }) => {
       await qc.cancelQueries({ queryKey: usersKeys.all });
       const snapshots = qc.getQueriesData({

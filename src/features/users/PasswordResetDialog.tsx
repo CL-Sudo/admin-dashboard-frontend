@@ -38,8 +38,6 @@ export default function PasswordResetDialog({
     onSuccess: () => {
       toast('Password reset requested');
       setHasRequested(true);
-      // In dev, backend may return resetToken
-      // Show it in the dialog so you can test without email infra.
     },
     onError: e =>
       toast('Reset request failed', {

@@ -4,7 +4,6 @@ import type { BadgeProps } from '@/components/ui/badge';
 export default function StatusBadge({ value }: { value: string }) {
   const v = value.toUpperCase();
 
-  // Avoid custom colors per your setup; use variants only.
   const variant =
     v === 'ACTIVE'
       ? 'default'
@@ -12,5 +11,7 @@ export default function StatusBadge({ value }: { value: string }) {
         ? 'secondary'
         : 'outline';
 
-  return <Badge variant={variant as BadgeProps['variant']}>{v}</Badge>;
+  return (
+    <Badge variant={variant as BadgeProps['variant']}>{v}</Badge>
+  );
 }

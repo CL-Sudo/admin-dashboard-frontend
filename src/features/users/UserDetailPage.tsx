@@ -54,18 +54,14 @@ export default function UserDetailPage() {
   });
 
   // Pull recent audit logs and filter client-side for this user.
-  // (Upgrade later by adding entityId filter to backend /audit.)
   const auditQ = useQuery({
     queryKey: ['audit-user-detail', userId],
     queryFn: () =>
       getAuditLogs({
         page: 1,
         limit: 50,
-        // Option A: actions done to the user record
         entityType: 'User',
         entityId: userId,
-        // Option B: actions performed by the user (uncomment if you want)
-        // actorUserId: userId,
       }),
     enabled: !!userId,
   });
@@ -108,8 +104,7 @@ export default function UserDetailPage() {
     },
     {
       header: 'Actor',
-      cell: a =>
-        a.actor?.email ?? a.actorUserId ?? 'System',
+      cell: a => a.actor?.email ?? a.actorUserId ?? 'System',
     },
     {
       header: 'Action',
