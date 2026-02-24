@@ -58,6 +58,126 @@ src/
   pages/        # Top-level fallback pages
 ```
 
+```
+admin-dashboard-frontend
+├─ .prettierignore
+├─ .prettierrc
+├─ components.json
+├─ docs
+│  ├─ api-contracts.md
+│  ├─ architecture.md
+│  ├─ development.md
+│  └─ operations.md
+├─ eslint.config.js
+├─ index.html
+├─ package.json
+├─ postcss.config.js
+├─ public
+│  └─ vite.svg
+├─ README.md
+├─ src
+│  ├─ api
+│  │  ├─ audit.ts
+│  │  ├─ auth.ts
+│  │  ├─ categories.ts
+│  │  ├─ client.ts
+│  │  ├─ dashboard.ts
+│  │  ├─ products.ts
+│  │  └─ users.ts
+│  ├─ app
+│  │  ├─ App.tsx
+│  │  ├─ providers.tsx
+│  │  └─ router.tsx
+│  ├─ App.css
+│  ├─ assets
+│  │  └─ react.svg
+│  ├─ components
+│  │  ├─ auth
+│  │  │  ├─ Protected.tsx
+│  │  │  ├─ RequireRole.tsx
+│  │  │  └─ RoleGate.tsx
+│  │  ├─ dashboard
+│  │  │  ├─ ChartSkeleton.tsx
+│  │  │  ├─ KpiCard.tsx
+│  │  │  ├─ KpiCardSkeleton.tsx
+│  │  │  └─ TableSkeleton.tsx
+│  │  ├─ layout
+│  │  │  ├─ AppShell.tsx
+│  │  │  ├─ Sidebar.tsx
+│  │  │  └─ Topbar.tsx
+│  │  ├─ shared
+│  │  │  ├─ DataTable.tsx
+│  │  │  ├─ Pagination.tsx
+│  │  │  ├─ RoleBadges.tsx
+│  │  │  ├─ StatusBadge.tsx
+│  │  │  └─ UserStatusBadge.tsx
+│  │  └─ ui
+│  │     ├─ alert.tsx
+│  │     ├─ badge.tsx
+│  │     ├─ button.tsx
+│  │     ├─ card.tsx
+│  │     ├─ dialog.tsx
+│  │     ├─ dropdown-menu.tsx
+│  │     ├─ input.tsx
+│  │     ├─ label.tsx
+│  │     ├─ select.tsx
+│  │     ├─ separator.tsx
+│  │     ├─ sheet.tsx
+│  │     ├─ sidebar.tsx
+│  │     ├─ skeleton.tsx
+│  │     ├─ sonner.tsx
+│  │     ├─ switch.tsx
+│  │     ├─ table.tsx
+│  │     ├─ textarea.tsx
+│  │     └─ tooltip.tsx
+│  ├─ features
+│  │  ├─ audit
+│  │  │  └─ AuditLogsPage.tsx
+│  │  ├─ auth
+│  │  │  ├─ auth.events.ts
+│  │  │  ├─ auth.store.ts
+│  │  │  ├─ LoginPage.tsx
+│  │  │  └─ ResetPasswordPage.tsx
+│  │  ├─ categories
+│  │  │  └─ CategoriesPage.tsx
+│  │  ├─ dashboard
+│  │  │  └─ DashboardPage.tsx
+│  │  ├─ products
+│  │  │  ├─ ProductDetailPage.tsx
+│  │  │  ├─ ProductFormDialog.tsx
+│  │  │  ├─ products.keys.ts
+│  │  │  └─ ProductsPage.tsx
+│  │  └─ users
+│  │     ├─ PasswordResetDialog.tsx
+│  │     ├─ UserDetailPage.tsx
+│  │     ├─ UserFormDialog.tsx
+│  │     ├─ UserPage.tsx
+│  │     ├─ UserRolesDialog.tsx
+│  │     └─ users.keys.ts
+│  ├─ hooks
+│  │  └─ use-mobile.tsx
+│  ├─ index.css
+│  ├─ lib
+│  │  ├─ env.ts
+│  │  ├─ httpError.ts
+│  │  ├─ storage.ts
+│  │  ├─ uploadSigned.ts
+│  │  ├─ useDebounce.ts
+│  │  └─ utils.ts
+│  ├─ main.tsx
+│  └─ pages
+│     ├─ DashboardPage.tsx
+│     └─ NotFoundPage.tsx
+├─ tailwind.config.js
+├─ tsconfig.app.json
+├─ tsconfig.json
+├─ tsconfig.node.json
+├─ vercel.json
+├─ vite.config.ts
+└─ yarn.lock
+
+```
+
 ## Route Overview
 
 - `/login`
