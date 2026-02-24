@@ -54,6 +54,12 @@ export default function LoginPage() {
           <CardTitle>Admin Login</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="text-sm text-gray-600">
+            email: admin@example.com
+          </p>
+          <p className="mb-4 text-sm text-gray-600">
+            password: Password1234!
+          </p>
           {error && (
             <Alert className="mb-4 border-red-200 bg-red-50">
               <AlertDescription className="text-red-800">
@@ -64,7 +70,9 @@ export default function LoginPage() {
           <form
             onSubmit={event => {
               event.preventDefault();
-              void form.handleSubmit(values => onSubmit(values))(event);
+              void form.handleSubmit(values => onSubmit(values))(
+                event
+              );
             }}
             className="space-y-4"
           >
