@@ -3,11 +3,7 @@ import { z } from 'zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  createUser,
-  updateUser,
-  type UserRow,
-} from '@/api/users';
+import { createUser, updateUser, type UserRow } from '@/api/users';
 import { usersKeys } from './users.keys';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/httpError';
@@ -69,7 +65,7 @@ export default function UserFormDialog({
         email: user.email,
         name: user.name,
         initialPassword: '',
-        role: (user.roles?.[0] ?? 'VIEWER'),
+        role: user.roles?.[0] ?? 'VIEWER',
       });
     } else if (open) {
       form.reset({
@@ -118,11 +114,6 @@ export default function UserFormDialog({
         description: getErrorMessage(e),
       }),
   });
-
-  // const onSubmit = (v: FormValues) => {
-  //   if (isEdit) return updateMut.mutate(v);
-  //   return createMut.mutate(v);
-  // };
 
   const onSubmit = (v: FormValues) => {
     const pwd = v.initialPassword?.trim();
